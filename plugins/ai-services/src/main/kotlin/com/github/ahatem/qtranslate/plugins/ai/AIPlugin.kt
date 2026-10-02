@@ -5,6 +5,7 @@ import com.github.ahatem.qtranslate.api.plugin.PluginContext
 import com.github.ahatem.qtranslate.api.plugin.Service
 import com.github.ahatem.qtranslate.api.plugin.ServiceError
 import com.github.ahatem.qtranslate.plugins.common.KtorHttpClient
+import com.github.ahatem.qtranslate.plugins.common.HttpClientConfig
 import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.Result
@@ -57,7 +58,8 @@ class AIPlugin : Plugin<AISettings> {
             customHeaders = context.getValue(KEY_CUSTOM_HEADERS) ?: AISettings().customHeaders
         )
 
-        httpClient = KtorHttpClient(context)
+        // A retry can duplicate a billed generation; let the user explicitly retry AI failures.
+        httpClient = KtorHttpClient(context, config = HttpClientConfig(enableRetry = false))
 
         serviceClient = AIServiceClient(
             pluginContext = context,

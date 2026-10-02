@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
+import kotlinx.coroutines.CancellationException
 import java.io.File
 import java.io.IOException
 
@@ -55,7 +56,9 @@ class HistoryRepository(
     } catch (e: IOException) {
         logger.error("Failed to read history from disk, starting fresh", e)
         emptyList()
-    } catch (e: Exception) {
+    } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
         logger.error("Unexpected error loading history, starting fresh", e)
         emptyList()
     }
@@ -74,6 +77,8 @@ class HistoryRepository(
             logger.error("Failed to serialize history", e)
         } catch (e: IOException) {
             logger.error("Failed to write history to disk", e)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             logger.error("Unexpected error saving history", e)
         }
@@ -86,6 +91,8 @@ class HistoryRepository(
             logger.info("History cleared successfully")
         } catch (e: IOException) {
             logger.error("Failed to clear history", e)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             logger.error("Unexpected error clearing history", e)
         }

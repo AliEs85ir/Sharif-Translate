@@ -6,6 +6,7 @@ import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.Result
 import kotlinx.serialization.SerializationException
+import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.json.Json
 
 /**
@@ -24,6 +25,8 @@ class JsonResponseParser<T>(
     override suspend fun parse(jsonString: String): Result<T, ServiceError> {
         return try {
             Ok(deserializer(jsonString))
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: SerializationException) {
             pluginContext.logger.error("JSON parsing failed", e)
             Err(ServiceError.InvalidResponseError("Failed to parse JSON: ${e.message}", e))

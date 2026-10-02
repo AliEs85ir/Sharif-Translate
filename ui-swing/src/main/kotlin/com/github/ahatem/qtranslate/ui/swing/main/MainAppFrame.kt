@@ -987,6 +987,7 @@ class MainAppFrame(
             }
 
             override fun windowClosed(e: WindowEvent?) {
+                globalKeyListener.shutdown()
                 appScope.cancel()
                 trayIcon?.let { SystemTray.getSystemTray().remove(it) }
                 trayIcon = null
@@ -1234,11 +1235,6 @@ class MainAppFrame(
                 registerLocalHotkeys()
             }
 
-            override fun windowClosed(e: WindowEvent?) {
-                globalKeyListener.shutdown()
-                System.runFinalization()
-                exitProcess(0)
-            }
         })
     }
 

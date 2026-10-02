@@ -48,7 +48,8 @@ class ActiveServiceManager(
         val preferredId = config.getActivePreset()?.selectedServices?.get(type)
 
         val resolved = preferredId?.let { services[it] }
-            ?: services.values.firstOrNull { mapServiceToType(it) == type }
+            ?.takeIf { it.id !in config.disabledServices && mapServiceToType(it) == type }
+            ?: services.values.firstOrNull { it.id !in config.disabledServices && mapServiceToType(it) == type }
 
         return resolved as? T
     }

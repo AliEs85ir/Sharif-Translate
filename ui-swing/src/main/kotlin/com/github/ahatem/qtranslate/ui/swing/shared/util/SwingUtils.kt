@@ -32,7 +32,7 @@ fun getVirtualScreenBounds(): Rectangle {
 fun createButtonWithIcon(iconManager: IconManager, iconPath: String, size: Int): FlatButton {
     val icon = iconManager.getIcon(iconPath, size, size)
     return FlatButton().apply {
-        this.icon = (icon as FlatSVGIcon).applyForegroundColorFilter()
+        this.icon = (icon as? FlatSVGIcon)?.applyForegroundColorFilter() ?: icon
         toolTipText = ""
     }
 }
@@ -77,7 +77,7 @@ fun FontConfig.toFont(): Font {
 
 fun Dimension.toSize(): Size = Size(width, height)
 fun Size.toDimension(): Dimension = Dimension(width, height)
-fun Point.toPosition(): Position = Position(x, y)
+fun Point.toPosition(): Position = Position(x.coerceAtLeast(0), y.coerceAtLeast(0))
 fun Position.toPoint(): Point = Point(x, y)
 
 

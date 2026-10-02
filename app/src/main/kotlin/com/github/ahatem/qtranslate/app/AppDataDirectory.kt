@@ -43,7 +43,7 @@ object AppDataDirectory {
             return file.also { f -> f.mkdirs() }
         }
 
-        val jarDir = jarLocation()
+        val jarDir = installationDirectory()
         if (jarDir != null && jarDir.canWrite()) {
             return jarDir.also { it.mkdirs() }
         }
@@ -54,14 +54,34 @@ object AppDataDirectory {
      * Returns the directory containing the running JAR, or `null` if the
      * location cannot be determined (e.g. running from an IDE or test runner).
      */
-    private fun jarLocation(): File? = runCatching {
+    fun installationDirectory(): File? = runCatching {
         val uri = AppDataDirectory::class.java
             .protectionDomain
             .codeSource
             .location
             .toURI()
-        File(uri).parentFile
+        val location = File(uri)
+        if (!location.isFile) return@runCatching null
+        val parent = location.parentFile
+        if (parent.name == "app" && File(parent.parentFile, "runtime").isDirectory) parent.parentFile else parent
     }.getOrNull()
+
+    /** Keep bundled resources available when data falls back to APPDATA or an explicit override. */
+    fun installBundledResources(appData: File) {
+        val installation = installationDirectory() ?: return
+        if (installation.canonicalFile == appData.canonicalFile) return
+        for (name in listOf("plugins", "languages", "themes")) {
+            val source = File(installation, name)
+            if (!source.isDirectory) continue
+            source.walkTopDown().filter { it.isFile }.forEach { bundled ->
+                val target = File(File(appData, name), bundled.relativeTo(source).path)
+                if (!target.exists()) {
+                    target.parentFile.mkdirs()
+                    bundled.copyTo(target)
+                }
+            }
+        }
+    }
 
     private fun osFallback(): File {
         val base = when {

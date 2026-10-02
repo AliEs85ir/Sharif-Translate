@@ -15,6 +15,7 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.collectLatest
 
 /**
  * MVI store for the main translation screen.
@@ -174,7 +175,7 @@ class MainStore(
                 settingsState.map { it.isSpellCheckingEnabled }.distinctUntilChanged()
             ) { text, isEnabled -> text to isEnabled }
                 .debounce(AppConstants.SPELL_CHECK_DEBOUNCE_MS)
-                .collect { (text, isEnabled) -> handleSpellCheck(text, isEnabled) }
+                .collectLatest { (text, isEnabled) -> handleSpellCheck(text, isEnabled) }
         }
     }
 
@@ -194,22 +195,13 @@ class MainStore(
             // ---- Synchronous state mutations — no coroutine needed ----
 
             is MainIntent.UpdateInputText -> {
+                translateTextUseCase.cancel()
                 // Remove line breaks if enabled — replaces \n with space so
                 // PDF-copied text translates as complete sentences (Mohamed's request)
                 val cleaned = if (settingsState.value.isRemoveLineBreaksEnabled)
                     intent.text.replace("\n", " ").replace("\r", "").replace("  ", " ").trim()
                 else intent.text
-                _state.update { it.copy(inputText = cleaned, detectedSourceLanguage = null, isQuickTranslateInputEdit = false) }
-                // With instant translate enabled, cancel any in-flight translation immediately
-                // so the loading indicator clears and the debounce can queue the next request.
-                // Without this, the collect coroutine in observeInstantTranslation stays
-                // suspended at join() until the current translation finishes — the user's new
-                // text effectively waits in line behind the old result.
-                // Capture state once to avoid reading _state.value twice (TOCTOU race).
-                if (settingsState.value.isInstantTranslationEnabled && _state.value.isLoading) {
-                    translateTextUseCase.cancel()
-                    _state.update { s -> s.copy(isLoading = false) }
-                }
+                _state.update { it.copy(inputText = cleaned, detectedSourceLanguage = null, isQuickTranslateInputEdit = false, isLoading = false, spellCheckCorrections = emptyList()) }
             }
 
             is MainIntent.UpdateQuickTranslateText -> {
@@ -228,11 +220,16 @@ class MainStore(
                 }
             }
 
-            is MainIntent.SelectSourceLanguage ->
+            is MainIntent.SelectSourceLanguage -> {
+                translateTextUseCase.cancel()
                 _state.update { it.copy(sourceLanguage = intent.language, detectedSourceLanguage = null) }
+                _state.update { it.copy(isLoading = false) }
+            }
 
-            is MainIntent.SelectTargetLanguage ->
-                _state.update { it.copy(targetLanguage = intent.language) }
+            is MainIntent.SelectTargetLanguage -> {
+                translateTextUseCase.cancel()
+                _state.update { it.copy(targetLanguage = intent.language, isLoading = false) }
+            }
 
             is MainIntent.ApplyCorrection ->
                 _state.update {
@@ -242,8 +239,11 @@ class MainStore(
                     )
                 }
 
-            MainIntent.HideQuickTranslate ->
-                _state.update { it.copy(isQuickTranslateDialogVisible = false) }
+            MainIntent.HideQuickTranslate -> {
+                val popupRequest = _state.value.isQuickTranslateInputEdit
+                if (popupRequest) translateTextUseCase.cancel()
+                _state.update { it.copy(isQuickTranslateDialogVisible = false, isLoading = if (popupRequest) false else it.isLoading) }
+            }
 
             MainIntent.ToggleQuickTranslateDialogPin ->
                 // Use `it` from the update lambda — not _state.value — to avoid
@@ -317,8 +317,9 @@ class MainStore(
                 }
             }
 
-            is MainIntent.HideQuickDictionary -> _state.update {
-                it.copy(isQuickDictionaryVisible = false)
+            is MainIntent.HideQuickDictionary -> {
+                if (!_state.value.isDictionaryPanelVisible) lookupWordUseCase.cancel()
+                _state.update { it.copy(isQuickDictionaryVisible = false, isDictionaryLoading = false) }
             }
 
             is MainIntent.ToggleQuickDictionaryPin -> _state.update {
@@ -423,7 +424,7 @@ class MainStore(
         } else {
             emptyList()
         }
-        _state.update { it.copy(spellCheckCorrections = corrections) }
+        _state.update { if (it.inputText == text) it.copy(spellCheckCorrections = corrections) else it }
     }
 
     // -------------------------------------------------------------------------
@@ -441,6 +442,7 @@ class MainStore(
     private fun handleUndo() {
         val current = _state.value
         if (!current.canUndo) return
+        translateTextUseCase.cancel()
 
         val newIndex = current.historyIndex - 1
         val snapshot = current.history[newIndex]
@@ -468,6 +470,7 @@ class MainStore(
     private fun handleRedo() {
         val current = _state.value
         if (!current.canRedo) return
+        translateTextUseCase.cancel()
 
         val newIndex = current.historyIndex + 1
 
@@ -480,7 +483,8 @@ class MainStore(
                     extraOutputText        = "",
                     detectedSourceLanguage = null,
                     spellCheckCorrections  = emptyList(),
-                    historyIndex           = newIndex
+                    historyIndex           = newIndex,
+                    isLoading              = false
                 )
             }
         } else {
@@ -502,6 +506,7 @@ class MainStore(
     }
 
     private fun handleRestoreHistoryEntry(intent: MainIntent.RestoreHistoryEntry) {
+        translateTextUseCase.cancel()
         val snapshot = intent.snapshot
         val idx = _state.value.history.indexOf(snapshot)
         _state.update {
@@ -530,15 +535,14 @@ class MainStore(
         // even when the main window is visible. focusableWindowState=false on
         // LoadingIndicator means it never steals focus from the source app.
         _state.update { it.copy(inputText = selectedText, isReplacingSelection = true) }
-        translateTextUseCase(
+        val result = translateTextUseCase(
             getState       = { _state.value },
             updateState    = { transform -> _state.update(transform) },
             onStatusUpdate = ::updateStatusBar,
             textOverride   = selectedText
         )
-        val result = _state.value.translatedText
         _state.update { it.copy(isReplacingSelection = false) }
-        if (result.isNotBlank()) {
+        if (!result.isNullOrBlank()) {
             _eventChannel.send(MainEvent.PasteTranslation(result))
         }
     }

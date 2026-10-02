@@ -14,6 +14,11 @@ import com.github.ahatem.qtranslate.plugins.google.common.GoogleLanguageMapper
 import com.github.ahatem.qtranslate.plugins.google.common.OfficialTranslateResponse
 import com.github.ahatem.qtranslate.plugins.google.common.TranslateResponse
 import com.github.michaelbull.result.Result
+import com.github.michaelbull.result.Err
+import com.github.michaelbull.result.Ok
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.contentOrNull
 import com.github.michaelbull.result.coroutines.coroutineBinding
 import com.github.michaelbull.result.toResultOr
 
@@ -63,10 +68,9 @@ class GoogleTranslatorService(
 
         val requestBody = mapOf(
             "q" to request.text,
-            "source" to sourceTag,
             "target" to targetTag,
             "format" to "text"
-        )
+        ) + if (request.sourceLanguage != LanguageCode.AUTO) mapOf("source" to sourceTag) else emptyMap()
 
         val responseString = httpClient.sendJson(
             url = TRANSLATE_OFFICIAL,
@@ -123,6 +127,9 @@ class GoogleTranslatorService(
 
         val parsed = translateParser.parse(responseString).bind()
         val translatedText = parsed.sentences.joinToString("") { it.text.orEmpty() }
+        if (translatedText.isBlank()) {
+            Err(ServiceError.InvalidResponseError("No translation in Google response", null)).bind()
+        }
         val detectedLang = languageMapper.fromProviderCode(parsed.sourceLanguage)
         val alternatives = parsed.dictionary?.firstOrNull()?.terms?.take(3) ?: emptyList()
 
@@ -138,7 +145,7 @@ class GoogleTranslatorService(
         sourceTag: String,
         targetTag: String
     ): Result<TranslationResponse, ServiceError> = coroutineBinding {
-        val parsed: List<List<String>> = httpClient.fetchJson<List<List<String>>>(
+        val parsed: JsonArray = httpClient.fetchJson<JsonArray>(
             url = TRANSLATE_FALLBACK,
             headers = apiConfig.createHeaders(),
             queryParams = mapOf(
@@ -150,17 +157,19 @@ class GoogleTranslatorService(
             )
         ).bind()
 
-        val translatedText = parsed.getOrNull(0)?.getOrNull(0)
-            .toResultOr { ServiceError.InvalidResponseError("No translation in fallback response", null) }
-            .bind()
-
-        val detectedLang = parsed.getOrNull(0)?.getOrNull(1)
-            ?.let { languageMapper.fromProviderCode(it) }
-
-        TranslationResponse(
-            translatedText = translatedText.trim(),
-            detectedLanguage = detectedLang
-        )
+        parseGoogleFallbackResponse(parsed).bind()
     }
 
+}
+
+/** Google's fallback has different response shapes for explicit source and auto-detection. */
+internal fun parseGoogleFallbackResponse(parsed: JsonArray): Result<TranslationResponse, ServiceError> {
+    val first = parsed.firstOrNull()
+    val translation = if (first is JsonArray) first.getOrNull(0) else first
+    val translatedText = (translation as? JsonPrimitive)?.takeIf { it.isString }
+        ?.contentOrNull?.takeIf { it.isNotBlank() }
+        ?: return Err(ServiceError.InvalidResponseError("No translation in fallback response", null))
+    val detected = ((first as? JsonArray)?.getOrNull(1) as? JsonPrimitive)?.contentOrNull
+        ?.takeIf { it.isNotBlank() }?.let { GoogleLanguageMapper.fromProviderCode(it) }
+    return Ok(TranslationResponse(translatedText.trim(), detected))
 }

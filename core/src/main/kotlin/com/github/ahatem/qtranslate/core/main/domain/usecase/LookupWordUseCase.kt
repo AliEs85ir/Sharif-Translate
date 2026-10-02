@@ -17,6 +17,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 
 class LookupWordUseCase(
     private val scope: CoroutineScope,
@@ -25,6 +28,14 @@ class LookupWordUseCase(
 ) {
     private val logger: Logger = loggerFactory.getLogger("LookupWordUseCase")
     private var lookupJob: Job? = null
+    private val requestLock = Any()
+    private var generation = 0L
+
+    fun cancel() = synchronized(requestLock) {
+        generation++
+        lookupJob?.cancel()
+        lookupJob = null
+    }
 
     suspend operator fun invoke(
         word: String,
@@ -32,10 +43,21 @@ class LookupWordUseCase(
         updateState: (MainState.() -> MainState) -> Unit,
         onStatusUpdate: suspend (StatusCode, NotificationType, Boolean) -> Unit
     ) {
-        lookupJob?.cancel(CancellationException("New lookup requested"))
+        val request = synchronized(requestLock) {
+            lookupJob?.cancel(CancellationException("New lookup requested"))
+            ++generation
+        }
+        val publish: (MainState.() -> MainState) -> Unit = { transform ->
+            synchronized(requestLock) { if (request == generation) updateState(transform) }
+        }
+        val report: suspend (StatusCode, NotificationType, Boolean) -> Unit = { code, type, temporary ->
+            currentCoroutineContext().ensureActive()
+            if (synchronized(requestLock) { request == generation }) onStatusUpdate(code, type, temporary)
+        }
 
         if (word.isBlank()) {
             onStatusUpdate(StatusCode.NoWordToLookup, NotificationType.WARNING, true)
+            publish { copy(isDictionaryLoading = false, dictionaryWord = "", dictionaryEntries = emptyList()) }
             return
         }
 
@@ -43,13 +65,15 @@ class LookupWordUseCase(
         if (dictionary == null) {
             logger.warn("No dictionary service available")
             onStatusUpdate(StatusCode.NoDictionaryServiceActive, NotificationType.ERROR, true)
-            updateState { copy(isDictionaryLoading = false, dictionaryFailed = true) }
+            publish { copy(isDictionaryLoading = false, dictionaryFailed = true, dictionaryWord = word, dictionaryEntries = emptyList()) }
             return
         }
 
         logger.info("Looking up '$word' with '${dictionary.name}'")
 
-        lookupJob = scope.launch {
+        val job = scope.launch(start = CoroutineStart.LAZY) {
+            val updateState = publish
+            val onStatusUpdate = report
             try {
                 onStatusUpdate(StatusCode.LookingUpWord, NotificationType.INFO, false)
                 updateState {
@@ -64,6 +88,7 @@ class LookupWordUseCase(
                 val result = withTimeoutOrNull(AppConstants.TRANSLATION_TIMEOUT_MS) {
                     dictionary.lookup(DictionaryRequest(word, language))
                 }
+                ensureActive()
 
                 if (result == null) {
                     logger.warn("Dictionary lookup timed out for '$word'")
@@ -106,5 +131,9 @@ class LookupWordUseCase(
                 updateState { copy(isDictionaryLoading = false, dictionaryFailed = true) }
             }
         }
+        synchronized(requestLock) {
+            if (request == generation) lookupJob = job else job.cancel()
+        }
+        job.start()
     }
 }

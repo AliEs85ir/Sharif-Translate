@@ -12,6 +12,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
 import io.ktor.client.request.header
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerializationException
@@ -115,6 +116,8 @@ class Updater(
         } catch (e: SerializationException) {
             logger.error("Failed to parse GitHub release response", e)
             Err(UpdaterError.ParseError("Could not parse release data: ${e.message}", e))
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             logger.error("Failed to fetch latest release from $repoOwner/$repoName", e)
             Err(UpdaterError.NetworkError("Network error during update check: ${e.message}", e))

@@ -11,6 +11,7 @@ import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.FlowLayout
 import java.awt.Frame
+import java.awt.GridLayout
 import javax.swing.*
 
 /** Collection manager and item viewer, backed by the same repository used by popup actions. */
@@ -49,7 +50,7 @@ class CollectionsDialog(
                 renderer.getListCellRendererComponent(list, value.replace('\n', ' '), index, selected, focus)
             }
         }
-        val collectionButtons = JPanel(FlowLayout(FlowLayout.LEADING)).apply {
+        val collectionButtons = JPanel(GridLayout(2, 3, 4, 4)).apply {
             add(button("new") { promptName(null)?.let { name -> perform { repository.create(name) } } })
             add(button("rename") { selectedUser()?.let { c -> promptName(c.name)?.let { name -> perform { repository.rename(c.id, name) } } } })
             add(button("delete") { selectedUser()?.let { c ->
@@ -60,7 +61,7 @@ class CollectionsDialog(
             add(button("up") { selectedUser()?.let { c -> perform { repository.reorder(c.id, -1) } } })
             add(button("down") { selectedUser()?.let { c -> perform { repository.reorder(c.id, 1) } } })
         }
-        val itemButtons = JPanel(FlowLayout(FlowLayout.LEADING)).apply {
+        val itemButtons = JPanel(GridLayout(2, 3, 4, 4)).apply {
             add(button("add_text") {
                 selectedCollection()?.let { c ->
                     val text = JOptionPane.showInputDialog(this@CollectionsDialog, label("text_prompt"))
@@ -78,8 +79,13 @@ class CollectionsDialog(
             })
             add(button("up") { moveItem(-1) })
             add(button("down") { moveItem(1) })
-            add(JLabel(label("sort")))
-            add(sortBox)
+        }
+        val itemToolbar = JPanel(BorderLayout(0, 4)).apply {
+            add(JPanel(BorderLayout(8, 0)).apply {
+                add(JLabel(label("sort")), BorderLayout.LINE_START)
+                add(sortBox, BorderLayout.CENTER)
+            }, BorderLayout.NORTH)
+            add(itemButtons, BorderLayout.CENTER)
         }
         sortBox.addActionListener { if (!rendering) selectedCollection()?.let { c ->
             val sort = sortBox.selectedItem as? ItemSort ?: return@let
@@ -92,7 +98,7 @@ class CollectionsDialog(
         }
         val right = JPanel(BorderLayout()).apply {
             add(JScrollPane(itemList), BorderLayout.CENTER)
-            add(itemButtons, BorderLayout.SOUTH)
+            add(itemToolbar, BorderLayout.SOUTH)
         }
         contentPane.add(JSplitPane(JSplitPane.HORIZONTAL_SPLIT, left, right).apply { resizeWeight = 0.38 }, BorderLayout.CENTER)
         refresh()

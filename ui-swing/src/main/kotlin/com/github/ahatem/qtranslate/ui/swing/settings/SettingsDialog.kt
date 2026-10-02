@@ -2,6 +2,7 @@ package com.github.ahatem.qtranslate.ui.swing.settings
 
 import com.formdev.flatlaf.extras.FlatSVGIcon
 import com.github.ahatem.qtranslate.api.plugin.NotificationType
+import com.github.michaelbull.result.getError
 import com.github.ahatem.qtranslate.core.localization.LocalizationManager
 import com.github.ahatem.qtranslate.core.plugin.PluginManager
 import com.github.ahatem.qtranslate.core.settings.mvi.SettingsEvent
@@ -370,22 +371,18 @@ class SettingsDialog(
 
         okButton.isEnabled = false
         okButton.text = localizationManager.getString("settings_dialog.saving")
-        settingsStore.dispatch(SettingsIntent.SaveChanges)
-
         scope.launch {
-            val event = settingsStore.events
-                .filter { it is SettingsEvent.ShowMessage }
-                .first() as SettingsEvent.ShowMessage
+            val result = settingsStore.saveChanges()
 
             withContext(Dispatchers.Swing) {
-                if (event.type != NotificationType.ERROR) {
+                if (result.isOk) {
                     dispose()
                 } else {
                     okButton.isEnabled = true
                     okButton.text = localizationManager.getString("common.ok")
                     JOptionPane.showMessageDialog(
                         this@SettingsDialog,
-                        event.message,
+                        result.getError()?.message,
                         localizationManager.getString("settings_dialog.save_failed_title"),
                         JOptionPane.ERROR_MESSAGE
                     )

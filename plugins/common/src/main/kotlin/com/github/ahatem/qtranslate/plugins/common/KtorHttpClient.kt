@@ -19,6 +19,7 @@ import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.util.reflect.*
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 
@@ -78,6 +79,8 @@ class KtorHttpClient(
         } catch (e: HttpRequestTimeoutException) {
             pluginContext.logger.error("POST request timeout for $url", e)
             Err(ServiceError.TimeoutError("Request timed out: $url", e))
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             pluginContext.logger.error("POST request failed for $url", e)
             Err(ServiceError.NetworkError("Network error: ${e.message}", e))
@@ -104,6 +107,8 @@ class KtorHttpClient(
         } catch (e: HttpRequestTimeoutException) {
             pluginContext.logger.error("GET request timeout for $url", e)
             Err(ServiceError.TimeoutError("Request timed out: $url", e))
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             pluginContext.logger.error("GET request failed for $url", e)
             Err(ServiceError.NetworkError("Network error: ${e.message}", e))
@@ -188,6 +193,8 @@ class KtorHttpClient(
         } catch (e: HttpRequestTimeoutException) {
             pluginContext.logger.error("POST form request timeout for $url", e)
             Err(ServiceError.TimeoutError("Request timed out: $url", e))
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             pluginContext.logger.error("POST form request failed for $url", e)
             Err(ServiceError.NetworkError("Network error: ${e.message}", e))
@@ -257,6 +264,8 @@ class KtorHttpClient(
         } catch (e: HttpRequestTimeoutException) {
             pluginContext.logger.error("POST form bytes request timeout for $url", e)
             Err(ServiceError.TimeoutError("Request timed out: $url", e))
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             pluginContext.logger.error("POST form bytes request failed for $url", e)
             Err(ServiceError.NetworkError("Network error: ${e.message}", e))
@@ -282,6 +291,8 @@ class KtorHttpClient(
         } catch (e: HttpRequestTimeoutException) {
             pluginContext.logger.error("GET bytes request timeout for $url", e)
             Err(ServiceError.TimeoutError("Request timed out: $url", e))
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             pluginContext.logger.error("GET bytes request failed for $url", e)
             Err(ServiceError.NetworkError("Network error: ${e.message}", e))
@@ -307,12 +318,12 @@ class KtorHttpClient(
                 contentType(ContentType.Application.Json)
                 setBody(body, typeInfo)
             }
-            pluginContext.logger.info("POST typed request succeeded for ${response.request.url}")
-            pluginContext.logger.info("POST typed request succeeded for ${response.request.content}")
             handleResponse(response, url)
         } catch (e: HttpRequestTimeoutException) {
             pluginContext.logger.error("POST typed request timeout for $url", e)
             Err(ServiceError.TimeoutError("Request timed out: $url", e))
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             pluginContext.logger.error("POST typed request failed for $url", e)
             Err(ServiceError.NetworkError("Network error: ${e.message}", e))

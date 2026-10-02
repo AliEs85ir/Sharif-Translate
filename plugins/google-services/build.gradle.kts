@@ -5,6 +5,7 @@ plugins {
 }
 
 dependencies {
+    testImplementation(kotlin("test"))
     implementation(project(":api"))
     implementation(project(":plugins:common"))
 

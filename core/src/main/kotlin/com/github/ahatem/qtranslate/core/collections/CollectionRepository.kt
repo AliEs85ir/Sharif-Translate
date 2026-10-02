@@ -11,6 +11,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.coroutines.CancellationException
 import java.io.File
 import java.util.UUID
 
@@ -61,6 +62,8 @@ class CollectionRepository(appDataDirectory: File, private val logger: Logger, p
             mutable.value = listOf(decoded.find { it.id == FAVORITES_ID }?.copy(
                 name = "Favorites", kind = CollectionKind.SYSTEM, pinned = false
             ) ?: defaultCollections().first()) + decoded.filter { it.id != FAVORITES_ID && it.kind == CollectionKind.USER }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             logger.error("Could not load collections", e)
         }

@@ -6,6 +6,7 @@ import com.github.ahatem.qtranslate.api.plugin.ServiceError
 import com.github.ahatem.qtranslate.plugins.common.KtorHttpClient
 import com.github.ahatem.qtranslate.plugins.common.createJsonParser
 import com.github.michaelbull.result.Err
+import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.andThen
 import com.github.michaelbull.result.toResultOr
@@ -17,6 +18,7 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonObject
 import java.util.Base64
+import java.net.URI
 
 /**
  * Shared HTTP wrapper for the OpenAI-compatible chat completions API.
@@ -54,7 +56,8 @@ class AIServiceClient(
     ): Result<String, ServiceError> {
         val current = settings()
 
-        if (current.apiKey.isBlank()) {
+        validateSettings(current)?.let { return Err(it) }
+        if (current.apiKey.isBlank() && !isLocalEndpoint(current.baseUrl)) {
             return Err(
                 ServiceError.AuthenticationError(
                     "AI Plugin: API key is not configured. Add your key in Settings → Plugins → AI Plugin."
@@ -62,7 +65,7 @@ class AIServiceClient(
             )
         }
 
-        val baseUrl = current.baseUrl.trimEnd('/')
+        val baseUrl = current.baseUrl.trim().trimEnd('/')
         val endpoint = "$baseUrl/chat/completions"
 
         pluginContext.logger.debug("AIServiceClient → $endpoint [model=${current.model}]")
@@ -78,7 +81,7 @@ class AIServiceClient(
         )
 
         val headers = buildMap<String, String> {
-            put("Authorization", "Bearer ${current.apiKey}")
+            if (current.apiKey.isNotBlank()) put("Authorization", "Bearer ${current.apiKey.trim()}")
             put("Content-Type",  "application/json")
             // Merge user-supplied custom headers (e.g. OpenRouter attribution headers)
             if (current.customHeaders.isNotBlank()) {
@@ -102,13 +105,7 @@ class AIServiceClient(
         ).andThen { responseString ->
             responseParser.parse(responseString)
         }.andThen { response ->
-            response.error?.let { return@andThen Err(mapError(it)) }
-            response.choices.firstOrNull()?.message?.content
-                .toResultOr {
-                    ServiceError.InvalidResponseError(
-                        "AI service returned an empty response (no choices).", null
-                    )
-                }
+            extractText(response)
         }
     }
 
@@ -134,7 +131,8 @@ class AIServiceClient(
     ): Result<String, ServiceError> {
         val current = settings()
 
-        if (current.apiKey.isBlank()) {
+        validateSettings(current)?.let { return Err(it) }
+        if (current.apiKey.isBlank() && !isLocalEndpoint(current.baseUrl)) {
             return Err(
                 ServiceError.AuthenticationError(
                     "AI Plugin: API key is not configured. Add your key in Settings → Plugins → AI Plugin."
@@ -142,7 +140,7 @@ class AIServiceClient(
             )
         }
 
-        val baseUrl  = current.baseUrl.trimEnd('/')
+        val baseUrl  = current.baseUrl.trim().trimEnd('/')
         val endpoint = "$baseUrl/chat/completions"
 
         pluginContext.logger.debug(
@@ -178,7 +176,7 @@ class AIServiceClient(
         )
 
         val headers = buildMap<String, String> {
-            put("Authorization", "Bearer ${current.apiKey}")
+            if (current.apiKey.isNotBlank()) put("Authorization", "Bearer ${current.apiKey.trim()}")
             put("Content-Type",  "application/json")
             if (current.customHeaders.isNotBlank()) {
                 runCatching {
@@ -200,14 +198,38 @@ class AIServiceClient(
         ).andThen { responseString ->
             responseParser.parse(responseString)
         }.andThen { response ->
-            response.error?.let { return@andThen Err(mapError(it)) }
-            response.choices.firstOrNull()?.message?.content
-                .toResultOr {
-                    ServiceError.InvalidResponseError(
-                        "AI vision service returned an empty response (no choices).", null
-                    )
-                }
+            extractText(response)
         }
+    }
+
+    private fun isLocalEndpoint(baseUrl: String): Boolean =
+        runCatching { URI(baseUrl.trim()).host?.lowercase() in setOf("localhost", "127.0.0.1", "[::1]", "::1") }
+            .getOrDefault(false)
+
+    private fun validateSettings(current: AISettings): ServiceError? {
+        val uri = runCatching { URI(current.baseUrl.trim()) }.getOrNull()
+        if (uri?.scheme !in setOf("http", "https") || uri?.host.isNullOrBlank()) {
+            return ServiceError.InvalidInputError("AI Plugin: Base URL must be a valid HTTP or HTTPS URL.")
+        }
+        if (current.model.isBlank() || !current.temperature.isFinite() || current.temperature !in 0.0..2.0 || current.maxTokens <= 0) {
+            return ServiceError.InvalidInputError("AI Plugin: Check the model, temperature and maximum token settings.")
+        }
+        return null
+    }
+
+    private fun extractText(response: ChatCompletionResponse): Result<String, ServiceError> {
+        response.error?.let { return Err(mapError(it)) }
+        val choice = response.choices.firstOrNull()
+            ?: return Err(ServiceError.InvalidResponseError("AI service returned no choices.", null))
+        if (choice.finishReason == "length") {
+            return Err(ServiceError.InvalidResponseError("AI response was truncated. Increase Max Tokens or shorten the input.", null))
+        }
+        if (choice.finishReason == "content_filter" || !choice.message.refusal.isNullOrBlank()) {
+            return Err(ServiceError.InvalidResponseError("AI service declined this request.", null))
+        }
+        val content = choice.message.content?.takeIf { it.isNotBlank() }
+            ?: return Err(ServiceError.InvalidResponseError("AI service returned empty text.", null))
+        return Ok(content)
     }
 
     private fun mapError(error: ChatError): ServiceError {
@@ -233,7 +255,7 @@ class AIServiceClient(
         terms.any { this.contains(it, ignoreCase = true) }
 
     private companion object {
-        val AUTH_CODES       = setOf("invalid_api_key", "invalid_request_error", "401", "403")
+        val AUTH_CODES       = setOf("invalid_api_key", "401", "403")
         val RATE_LIMIT_CODES = setOf("rate_limit_exceeded", "429")
         val UNAVAILABLE_CODES = setOf("service_unavailable", "server_error", "503", "529")
     }

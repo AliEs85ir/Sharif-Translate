@@ -54,7 +54,7 @@ data class AISettings(
                 "Get an OpenRouter key at openrouter.ai/keys. " +
                 "Leave blank for local Ollama.",
         type        = SettingType.PASSWORD,
-        isRequired  = true,
+        isRequired  = false,
         group       = "endpoint",
         order       = 20
     )

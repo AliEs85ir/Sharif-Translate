@@ -116,7 +116,10 @@ class HandleTextToSpeechUseCase(
 
                         val bytes: ByteArray? = withContext(Dispatchers.IO) {
                             runCatching {
-                                java.net.URI(audio.url).toURL().readBytes()
+                                java.net.URI(audio.url).toURL().openConnection().apply {
+                                    connectTimeout = 15000
+                                    readTimeout = 15000
+                                }.getInputStream().use { it.readBytes() }
                             }.getOrNull()
                         }
 

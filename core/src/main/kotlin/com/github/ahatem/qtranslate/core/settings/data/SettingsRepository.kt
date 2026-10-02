@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
+import kotlinx.coroutines.CancellationException
 import java.io.File
 import java.io.IOException
 
@@ -86,6 +87,8 @@ class SettingsRepository(
             configuration.first().also {
                 logger.info("Initial configuration loaded successfully")
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             logger.error("Failed to load initial configuration, using default", e)
             Configuration.DEFAULT
@@ -110,6 +113,8 @@ class SettingsRepository(
         } catch (e: IOException) {
             logger.error("Failed to write configuration to disk", e)
             Err(SettingsError.IOError(e.message ?: "Disk write failed"))
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             logger.error("Unexpected error saving configuration", e)
             Err(SettingsError.UnknownError(e.message ?: "Unknown error"))
@@ -126,6 +131,8 @@ class SettingsRepository(
     suspend fun loadDisabledPluginIds(): Set<String> =
         try {
             dataStore.data.map { it[Keys.DISABLED_PLUGIN_IDS] ?: emptySet() }.first()
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             logger.error("Failed to load disabled plugin IDs", e)
             emptySet()
@@ -139,6 +146,8 @@ class SettingsRepository(
         try {
             dataStore.edit { it[Keys.DISABLED_PLUGIN_IDS] = ids }
             logger.debug("Saved ${ids.size} disabled plugin ID(s)")
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             logger.error("Failed to save disabled plugin IDs", e)
         }

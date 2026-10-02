@@ -29,6 +29,7 @@ dependencies {
     implementation(libs.jkeymaster)
 
     implementation(libs.commonmark)
+    testImplementation(kotlin("test"))
 }
 val compileKotlin: KotlinCompile by tasks
 

@@ -4,6 +4,9 @@ import com.github.ahatem.qtranslate.api.core.Logger
 import com.github.ahatem.qtranslate.api.plugin.NotificationType
 import com.github.ahatem.qtranslate.core.settings.data.Configuration
 import com.github.ahatem.qtranslate.core.settings.data.SettingsRepository
+import com.github.ahatem.qtranslate.core.settings.data.SettingsError
+import com.github.michaelbull.result.Result
+import com.github.michaelbull.result.Ok
 import com.github.ahatem.qtranslate.core.shared.arch.Store
 import com.github.ahatem.qtranslate.core.shared.events.AppEvent
 import com.github.ahatem.qtranslate.core.shared.events.AppEventBus
@@ -219,50 +222,53 @@ class SettingsStore(
      * the latest changes).
      */
     private fun launchSave() {
-        scope.launch {
-            saveMutex.withLock {
-                // Re-read state inside the coroutine and inside the lock —
-                // this is the fix for the stale-state race condition.
-                val current = _state.value
+        scope.launch { saveChanges() }
+    }
 
-                if (!current.isDirty) {
-                    logger.debug("Nothing to save — skipping")
-                    return@withLock
+    /** Await this save's result; a queued UI notification is not a save acknowledgement. */
+    suspend fun saveChanges(): Result<Unit, SettingsError> = saveMutex.withLock {
+        // Re-read state inside the coroutine and inside the lock —
+        // this is the fix for the stale-state race condition.
+        val current = _state.value
+
+        if (!current.isDirty) {
+            logger.debug("Nothing to save — skipping")
+            return@withLock Ok(Unit)
+        }
+
+        // Capture the config we intend to save while holding the lock
+        val configToSave = current.workingConfiguration
+
+        logger.info("Saving configuration...")
+        _state.update { it.copy(isSaving = true) }
+
+        val result = settingsRepository.updateConfiguration(configToSave)
+        result.fold(
+            success = {
+                logger.info("Configuration saved successfully")
+                _state.update {
+                    it.copy(
+                        originalConfiguration = configToSave,
+                        isDirty = it.workingConfiguration != configToSave,
+                        isSaving = false
+                    )
                 }
-
-                // Capture the config we intend to save while holding the lock
-                val configToSave = current.workingConfiguration
-
-                logger.info("Saving configuration...")
-                _state.update { it.copy(isSaving = true) }
-
-                settingsRepository.updateConfiguration(configToSave).fold(
-                    success = {
-                        logger.info("Configuration saved successfully")
-                        _state.update {
-                            it.copy(
-                                originalConfiguration = configToSave,
-                                isDirty = it.workingConfiguration != configToSave,
-                                isSaving = false
-                            )
-                        }
-                        eventBus.emit(AppEvent.ConfigurationSaved(configToSave))
-                        _eventChannel.send(
-                            SettingsEvent.ShowMessage("Settings saved", NotificationType.SUCCESS)
-                        )
-                    },
-                    failure = { error ->
-                        logger.error("Failed to save configuration: ${error.message}")
-                        _state.update { it.copy(isSaving = false) }
-                        _eventChannel.send(
-                            SettingsEvent.ShowMessage(
-                                "Failed to save settings: ${error.message}",
-                                NotificationType.ERROR
-                            )
-                        )
-                    }
+                eventBus.emit(AppEvent.ConfigurationSaved(configToSave))
+                _eventChannel.trySend(
+                    SettingsEvent.ShowMessage("Settings saved", NotificationType.SUCCESS)
+                )
+            },
+            failure = { error ->
+                logger.error("Failed to save configuration: ${error.message}")
+                _state.update { it.copy(isSaving = false) }
+                _eventChannel.trySend(
+                    SettingsEvent.ShowMessage(
+                        "Failed to save settings: ${error.message}",
+                        NotificationType.ERROR
+                    )
                 )
             }
-        }
+        )
+        result
     }
 }

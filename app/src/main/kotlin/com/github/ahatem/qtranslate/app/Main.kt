@@ -7,6 +7,7 @@ import com.github.ahatem.qtranslate.core.shared.AppConstants
 import com.github.ahatem.qtranslate.ui.swing.main.MainAppFrame
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.cancel
 import kotlinx.serialization.json.Json
 import javax.swing.SwingUtilities
 
@@ -34,6 +35,7 @@ fun main() = runBlocking {
     AppUiSetup.setRenderingHints()
 
     val appData    = AppDataDirectory.resolve()
+    AppDataDirectory.installBundledResources(appData)
     val logFactory = ConsoleLoggerFactory(ConsoleLoggerFactory.LogLevel.DEBUG)
     val logger     = logFactory.getLogger("Main")
 
@@ -58,6 +60,16 @@ fun main() = runBlocking {
         settingsRepo  = settingsRepo,
         initialConfig = initialConfig
     )
+    Runtime.getRuntime().addShutdownHook(Thread({
+        runBlocking {
+            withTimeoutOrNull(5000) {
+                deps.settingsStore.saveChanges()
+                deps.mainStore.onShutdown()
+                deps.pluginManager.shutdown()
+            }
+        }
+        deps.appScope.cancel()
+    }, "QTranslate-Shutdown"))
     AppUiSetup.apply(initialConfig, deps.themeManager)
 
     logger.info("Loading plugins...")

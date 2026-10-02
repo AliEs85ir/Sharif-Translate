@@ -60,14 +60,14 @@ class BingTranslatorService(
 
             val responses = parser.parse(responseString).bind()
             val response = responses.firstOrNull {
-                it.detectedLanguage != null && it.translations != null
+                !it.translations.isNullOrEmpty() && it.translations.any { translation -> translation.text.isNotBlank() }
             }.toResultOr {
                 ServiceError.InvalidResponseError("Empty or invalid response from Bing", null)
             }.bind()
 
             TranslationResponse(
                 translatedText = response.translations!!.joinToString("") { it.text },
-                detectedLanguage = languageMapper.fromProviderCode(response.detectedLanguage!!.language)
+                detectedLanguage = response.detectedLanguage?.let { languageMapper.fromProviderCode(it.language) }
             )
         }
 

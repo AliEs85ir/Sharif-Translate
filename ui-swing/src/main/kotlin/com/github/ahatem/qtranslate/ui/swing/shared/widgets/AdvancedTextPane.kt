@@ -9,6 +9,8 @@ import java.awt.font.FontRenderContext
 import java.awt.geom.AffineTransform
 import java.awt.image.BufferedImage
 import java.io.File
+import java.text.BreakIterator
+import java.util.Locale
 import javax.imageio.ImageIO
 import javax.swing.*
 import javax.swing.event.DocumentEvent
@@ -20,6 +22,12 @@ import javax.swing.undo.UndoManager
 import kotlin.math.max
 import kotlin.math.roundToInt
 
+
+internal fun safeTextBreak(text: String, proposedEnd: Int): Int {
+    val end = proposedEnd.coerceIn(0, text.length)
+    val boundaries = BreakIterator.getCharacterInstance(Locale.ROOT).apply { setText(text) }
+    return if (boundaries.isBoundary(end)) end else boundaries.preceding(end).coerceAtLeast(0)
+}
 
 private fun Font.alignTo(base: Font): Font {
     val baseMetrics = FontRenderContext(null, true, true).let { base.getLineMetrics("A", it) }
@@ -68,10 +76,10 @@ class WrappingEditorKit : StyledEditorKit() {
         }
 
         private fun findClusterBoundary(start: Int, proposedEnd: Int): Int {
-            val text = document.getText(start, proposedEnd - start)
-            var end = text.length
-            while (end > 0 && Character.isLowSurrogate(text[end - 1])) end--
-            return start + end
+            // Inspect both sides of the proposed break; truncating first hides a
+            // following low surrogate or combining mark from the boundary check.
+            val text = document.getText(start, (endOffset.coerceAtMost(document.length) - start).coerceAtLeast(0))
+            return start + safeTextBreak(text, proposedEnd - start)
         }
     }
 

@@ -9,6 +9,7 @@ dependencies {
     implementation(project(":plugins:common"))
 
     implementation(libs.kotlinxSerialization)
+    testImplementation(kotlin("test"))
 }
 
 tasks.shadowJar {

@@ -7,4 +7,5 @@ dependencies {
 
     implementation(libs.kotlinxSerialization)
     implementation(libs.bundles.ktor)
+    testImplementation(kotlin("test"))
 }

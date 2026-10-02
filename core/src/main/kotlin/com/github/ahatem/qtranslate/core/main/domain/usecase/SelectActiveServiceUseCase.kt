@@ -64,7 +64,9 @@ class SelectActiveServiceUseCase(
 
             val activePreset = config.getActivePreset() ?: config.servicePresets.firstOrNull()
             val selectedTranslatorId = activePreset?.selectedServices?.get(ServiceType.TRANSLATOR)
-            val translator = services[selectedTranslatorId] as? Translator
+            val translator = (services[selectedTranslatorId] as? Translator)
+                ?.takeIf { it.id !in config.disabledServices }
+                ?: services.values.filterIsInstance<Translator>().firstOrNull { it.id !in config.disabledServices }
 
             val languages = if (translator != null) {
                 resolveLanguages(translator, langCache)
