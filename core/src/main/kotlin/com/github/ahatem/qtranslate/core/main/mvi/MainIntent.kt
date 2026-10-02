@@ -16,6 +16,9 @@ sealed interface MainIntent : UiIntent {
     /** User typed or pasted text into the input field. */
     data class UpdateInputText(val text: String) : MainIntent
 
+    /** User edited the source text in the quick translation popup. */
+    data class UpdateQuickTranslateText(val text: String) : MainIntent
+
     /** User selected a source language from the dropdown. */
     data class SelectSourceLanguage(val language: LanguageCode) : MainIntent
 

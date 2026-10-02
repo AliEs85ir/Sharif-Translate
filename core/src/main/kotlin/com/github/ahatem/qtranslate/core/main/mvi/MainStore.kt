@@ -122,10 +122,11 @@ class MainStore(
     private fun observeInstantTranslation() {
         // Immediately clear output when the user erases all input — no debounce.
         scope.launch {
-            state.map { it.inputText }
+            state.map { it.inputText to it.isQuickTranslateInputEdit }
                 .distinctUntilChanged()
-                .collect { text ->
-                    if (settingsState.value.isInstantTranslationEnabled && text.isBlank()) {
+                .collect { (text, fromQuickPopup) ->
+                    if (settingsState.value.isInstantTranslationEnabled
+                        && !fromQuickPopup && text.isBlank()) {
                         translateTextUseCase.cancel()
                         _state.update {
                             it.copy(
@@ -141,11 +142,12 @@ class MainStore(
 
         // Debounced translation — only fires when there is enough text to translate.
         scope.launch {
-            state.map { it.inputText }
+            state.map { it.inputText to it.isQuickTranslateInputEdit }
                 .debounce(AppConstants.INSTANT_TRANSLATION_DEBOUNCE_MS)
                 .distinctUntilChanged()
-                .collect { text ->
+                .collect { (text, fromQuickPopup) ->
                     if (settingsState.value.isInstantTranslationEnabled
+                        && !fromQuickPopup
                         && text.length >= AppConstants.INSTANT_TRANSLATE_MIN_CHARS
                     ) {
                         translateText()
@@ -197,7 +199,7 @@ class MainStore(
                 val cleaned = if (settingsState.value.isRemoveLineBreaksEnabled)
                     intent.text.replace("\n", " ").replace("\r", "").replace("  ", " ").trim()
                 else intent.text
-                _state.update { it.copy(inputText = cleaned, detectedSourceLanguage = null) }
+                _state.update { it.copy(inputText = cleaned, detectedSourceLanguage = null, isQuickTranslateInputEdit = false) }
                 // With instant translate enabled, cancel any in-flight translation immediately
                 // so the loading indicator clears and the debounce can queue the next request.
                 // Without this, the collect coroutine in observeInstantTranslation stays
@@ -210,6 +212,22 @@ class MainStore(
                 }
             }
 
+            is MainIntent.UpdateQuickTranslateText -> {
+                // The popup owns its debounce. Cancel the previous request immediately so
+                // a response for the old source text cannot replace the user's new input.
+                translateTextUseCase.cancel()
+                _state.update {
+                    it.copy(
+                        inputText = intent.text,
+                        isQuickTranslateInputEdit = true,
+                        translatedText = "",
+                        extraOutputText = "",
+                        detectedSourceLanguage = null,
+                        isLoading = false
+                    )
+                }
+            }
+
             is MainIntent.SelectSourceLanguage ->
                 _state.update { it.copy(sourceLanguage = intent.language, detectedSourceLanguage = null) }
 
@@ -217,7 +235,12 @@ class MainStore(
                 _state.update { it.copy(targetLanguage = intent.language) }
 
             is MainIntent.ApplyCorrection ->
-                _state.update { it.copy(inputText = it.inputText.replaceFirst(intent.original, intent.suggestion)) }
+                _state.update {
+                    it.copy(
+                        inputText = it.inputText.replaceFirst(intent.original, intent.suggestion),
+                        isQuickTranslateInputEdit = false
+                    )
+                }
 
             MainIntent.HideQuickTranslate ->
                 _state.update { it.copy(isQuickTranslateDialogVisible = false) }
@@ -318,7 +341,7 @@ class MainStore(
         if (extractedText.isBlank()) return
 
         // Write extracted text into input then translate — same path as manual typing.
-        _state.update { it.copy(inputText = extractedText) }
+        _state.update { it.copy(inputText = extractedText, isQuickTranslateInputEdit = false) }
         translateText()
     }
 
@@ -346,12 +369,13 @@ class MainStore(
 
         if (isPinnedAndVisible) {
             // Popup is already open and pinned — just update the text and retranslate.
-            _state.update { it.copy(inputText = intent.selectedText) }
+            _state.update { it.copy(inputText = intent.selectedText, isQuickTranslateInputEdit = true) }
         } else {
             // Open a fresh popup — not pinned.
             _state.update {
                 it.copy(
                     inputText = intent.selectedText,
+                    isQuickTranslateInputEdit = true,
                     isQuickTranslateDialogPinned = false,
                     isQuickTranslateDialogVisible = true
                 )

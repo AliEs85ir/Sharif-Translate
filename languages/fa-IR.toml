@@ -52,6 +52,8 @@ collection = "افزودن به مجموعه"
 coming_soon = "در نسخهٔ بعدی در دسترس خواهد بود"
 swap = "جابه‌جایی زبان‌ها"
 original = "متن اصلی"
+edit_hint = "برای ترجمهٔ دوباره ویرایش کنید"
+translator = "مترجم"
 
 [main_window]
 status_format = "با %s: %s ← %s"

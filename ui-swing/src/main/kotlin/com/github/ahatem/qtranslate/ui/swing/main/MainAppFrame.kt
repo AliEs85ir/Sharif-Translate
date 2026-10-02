@@ -112,6 +112,10 @@ class MainAppFrame(
             },
             onListen = { mainStore.dispatch(MainIntent.ListenToText(TextSource.Output)) },
             onCopy = { mainStore.state.value.translatedText.copyToClipboard() },
+            onOriginalTextChanged = { text ->
+                mainStore.dispatch(MainIntent.UpdateQuickTranslateText(text))
+            },
+            onTranslateEditedText = { mainStore.dispatch(MainIntent.Translate()) },
             onSourceLanguageSelected = { language ->
                 mainStore.dispatch(MainIntent.SelectSourceLanguage(language))
                 mainStore.dispatch(MainIntent.Translate())
@@ -1179,7 +1183,9 @@ class MainAppFrame(
                 comingSoon = localizer.getString("quick_popup.coming_soon"),
                 swap = localizer.getString("quick_popup.swap"),
                 autoDetect = localizer.getString("common.auto_detect"),
-                original = localizer.getString("quick_popup.original")
+                original = localizer.getString("quick_popup.original"),
+                editHint = localizer.getString("quick_popup.edit_hint"),
+                translator = localizer.getString("quick_popup.translator")
             )
         )
     }

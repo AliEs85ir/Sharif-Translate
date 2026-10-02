@@ -68,5 +68,7 @@ data class DialogStrings(
     val comingSoon: String,
     val swap: String,
     val autoDetect: String,
-    val original: String
+    val original: String,
+    val editHint: String,
+    val translator: String
 )

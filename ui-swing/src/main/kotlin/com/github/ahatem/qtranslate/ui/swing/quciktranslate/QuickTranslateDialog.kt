@@ -30,6 +30,8 @@ class QuickTranslateDialog(
     onTranslatorSelected: (String) -> Unit,
     private val onListen: () -> Unit,
     private val onCopy: () -> Unit,
+    private val onOriginalTextChanged: (String) -> Unit,
+    private val onTranslateEditedText: () -> Unit,
     private val onSourceLanguageSelected: (LanguageCode) -> Unit,
     private val onTargetLanguageSelected: (LanguageCode) -> Unit,
     private val onSwapLanguages: () -> Unit,
@@ -60,7 +62,10 @@ class QuickTranslateDialog(
     private val sourceButton = popupButton()
     private val targetButton = popupButton()
     private val swapButton = popupButton("icons/lucide/swap.svg", "icons/lucide/swap.svg")
-    private val translatorComboBox = TranslatorPopupButton(iconManager, onTranslatorSelected)
+    private val translatorComboBox = TranslatorPopupButton(iconManager) { id ->
+        editDebounceTimer?.stop()
+        onTranslatorSelected(id)
+    }
 
     private val pinButton = popupButton("icons/custom/pin.png", "icons/lucide/pin.svg")
     private val listenButton = popupButton("icons/custom/speaker.png", "icons/lucide/volume.svg")
@@ -71,23 +76,35 @@ class QuickTranslateDialog(
     private val collectionButton = popupButton("icons/custom/collection.png", "icons/lucide/book-open.svg")
     private val moreButton = popupButton()
     private val originalLabel = JLabel()
+    private val editHintLabel = JLabel()
+    private val translatorLabel = JLabel()
     private val originalText = JTextArea().apply {
-        isEditable = false
+        isEditable = true
         lineWrap = true
         wrapStyleWord = true
-        isOpaque = false
-        border = EmptyBorder(2, 0, 0, 0)
+        border = EmptyBorder(10, 12, 10, 12)
     }
-    private val detailsPanel = JPanel(BorderLayout(0, 4)).apply {
+    private val detailsPanel = JPanel(BorderLayout(0, 9)).apply {
         isOpaque = false
-        border = EmptyBorder(12, 18, 10, 18)
-        add(originalLabel, BorderLayout.NORTH)
-        add(JScrollPane(originalText).apply {
+        border = BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(1, 0, 0, 0, borderColor),
+            EmptyBorder(12, 18, 11, 18)
+        )
+        add(JPanel(BorderLayout()).apply {
             isOpaque = false
-            viewport.isOpaque = false
-            border = null
-            preferredSize = Dimension(0, 58)
+            add(originalLabel, BorderLayout.WEST)
+            add(editHintLabel, BorderLayout.EAST)
+        }, BorderLayout.NORTH)
+        add(JScrollPane(originalText).apply {
+            putClientProperty(FlatClientProperties.STYLE, "arc: 14; focusWidth: 1")
+            preferredSize = Dimension(0, 78)
         }, BorderLayout.CENTER)
+        add(JPanel(FlowLayout(FlowLayout.LEADING, 9, 0)).apply {
+            isOpaque = false
+            add(translatorLabel)
+            add(translatorComboBox)
+            add(pinButton)
+        }, BorderLayout.SOUTH)
         isVisible = false
     }
 
@@ -118,6 +135,8 @@ class QuickTranslateDialog(
     private var copyFeedbackTimer: Timer? = null
     private var resizeSaveTimer: Timer? = null
     private var expandTimer: Timer? = null
+    private var editDebounceTimer: Timer? = null
+    private var isSettingOriginalText = false
 
     // idle/auto-hide manager (single timer)
     private var idleHideTimer: Timer? = null
@@ -198,6 +217,19 @@ class QuickTranslateDialog(
         mainPanel.add(contentPanel, BorderLayout.CENTER)
         mainPanel.add(bottomPanel, BorderLayout.SOUTH)
 
+        originalText.document.addDocumentListener(object : javax.swing.event.DocumentListener {
+            override fun insertUpdate(e: javax.swing.event.DocumentEvent) = onOriginalEdited()
+            override fun removeUpdate(e: javax.swing.event.DocumentEvent) = onOriginalEdited()
+            override fun changedUpdate(e: javax.swing.event.DocumentEvent) = onOriginalEdited()
+        })
+        originalText.inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.CTRL_DOWN_MASK), "translate-edited")
+        originalText.actionMap.put("translate-edited", object : AbstractAction() {
+            override fun actionPerformed(e: ActionEvent) {
+                editDebounceTimer?.stop()
+                if (originalText.text.isNotBlank()) onTranslateEditedText()
+            }
+        })
+
         addComponentListener(object : ComponentAdapter() {
             override fun componentResized(e: ComponentEvent) = updateWindowShape()
         })
@@ -275,6 +307,7 @@ class QuickTranslateDialog(
         )
 
         pinButton.toolTipText = if (state.isPinned) state.strings.unpinTooltip else state.strings.pinTooltip
+        pinButton.text = if (state.isPinned) state.strings.unpinTooltip else state.strings.pinTooltip
         listenButton.toolTipText = state.strings.listenTooltip
         copyButton.toolTipText = state.strings.copyTooltip
         closeButton.toolTipText = UIManager.getString("InternalFrameTitlePane.closeButtonAccessibleName") ?: "Close"
@@ -284,9 +317,20 @@ class QuickTranslateDialog(
         collectionButton.isEnabled = false
         moreButton.text = if (detailsExpanded) state.strings.less else state.strings.more
         originalLabel.text = state.strings.original
+        editHintLabel.text = state.strings.editHint
+        translatorLabel.text = state.strings.translator
+        originalText.toolTipText = state.strings.editHint
+        val sourceFont = state.config.font.toFont()
+        if (originalText.font != sourceFont) originalText.font = sourceFont
         if (originalText.text != state.sourceText) {
-            originalText.text = state.sourceText
-            originalText.caretPosition = 0
+            editDebounceTimer?.stop()
+            isSettingOriginalText = true
+            try {
+                originalText.text = state.sourceText
+                originalText.caretPosition = 0
+            } finally {
+                isSettingOriginalText = false
+            }
         }
 
         listenButton.isEnabled = state.actionsState.canListen && !state.isLoading
@@ -296,6 +340,23 @@ class QuickTranslateDialog(
         if (lastRenderedText != textToRender) {
             lastRenderedText = textToRender
             outputTextArea.render(textToRender, emptyList(), false)
+        }
+    }
+
+    private fun onOriginalEdited() {
+        if (isSettingOriginalText || !isVisible) return
+        val text = originalText.text
+        editDebounceTimer?.stop()
+        // Dispatch after the document finishes its mutation; a synchronous render
+        // from the store must never touch the text component under its write lock.
+        SwingUtilities.invokeLater {
+            if (isVisible && originalText.text == text) onOriginalTextChanged(text)
+        }
+        if (text.isNotBlank()) {
+            editDebounceTimer = Timer(450) {
+                onTranslateEditedText()
+                (it.source as Timer).stop()
+            }.apply { isRepeats = false; start() }
         }
     }
 
@@ -374,6 +435,7 @@ class QuickTranslateDialog(
         if (!isVisible) return
         fadeTimer?.stop()
         expandTimer?.stop()
+        editDebounceTimer?.stop()
         stopIdleHide()
         uninstallAwtMouseListener()
         isVisible = false
@@ -394,14 +456,15 @@ class QuickTranslateDialog(
         val idleHideDelayMs = (currentConfig?.idleTimeoutSeconds ?: 3) * 1000
         idleHideTimer?.stop()
         idleHideTimer = Timer(idleHideDelayMs) { event ->
-            if (!isPinned) fadeTo(0f, FADE_MS) // fade out visually
-            // after fade complete, actually hide
-            Timer(FADE_MS + 20) {
-                if (!isPinned && !isMouseOver && !isLanguageMenuOpen) {
-                    onDismiss()
-                }
-                (it.source as Timer).stop()
-            }.apply { isRepeats = false; start() }
+            if (detailsExpanded && isFocused && originalText.isFocusOwner) {
+                startIdleHide()
+            } else {
+                if (!isPinned) fadeTo(0f, FADE_MS) // fade out visually
+                Timer(FADE_MS + 20) {
+                    if (!isPinned && !isMouseOver && !isLanguageMenuOpen) onDismiss()
+                    (it.source as Timer).stop()
+                }.apply { isRepeats = false; start() }
+            }
             (event.source as Timer).stop()
         }.apply {
             isRepeats = false
@@ -653,6 +716,7 @@ class QuickTranslateDialog(
         fun choose() {
             val language = list.selectedValue ?: return
             popup.isVisible = false
+            editDebounceTimer?.stop()
             if (source) onSourceLanguageSelected(language) else onTargetLanguageSelected(language)
         }
         list.addMouseListener(object : MouseAdapter() {
@@ -678,7 +742,7 @@ class QuickTranslateDialog(
         val startHeight = height
         val gc = graphicsConfiguration ?: return
         val maxHeight = (gc.bounds.height * MAX_HEIGHT_SCALE).toInt()
-        val targetHeight = (startHeight + if (expand) 90 else -90)
+        val targetHeight = (startHeight + if (expand) 175 else -175)
             .coerceIn(minimumSize.height, maxHeight)
         var step = 0
         expandTimer = Timer(16) { event ->
@@ -691,7 +755,11 @@ class QuickTranslateDialog(
             if (y + nextHeight > bottom) setLocation(x, bottom - nextHeight)
             if (step >= 10) {
                 (event.source as Timer).stop()
-                if (!expand) detailsPanel.isVisible = false
+                if (expand) {
+                    requestFocus()
+                    SwingUtilities.invokeLater { originalText.requestFocusInWindow() }
+                }
+                else detailsPanel.isVisible = false
                 revalidate()
             }
         }.apply { start() }
@@ -703,7 +771,7 @@ class QuickTranslateDialog(
         swapButton.preferredSize = Dimension(38, 38)
         sourceButton.addActionListener { showLanguageMenu(sourceButton, true) }
         targetButton.addActionListener { showLanguageMenu(targetButton, false) }
-        swapButton.addActionListener { onSwapLanguages() }
+        swapButton.addActionListener { editDebounceTimer?.stop(); onSwapLanguages() }
         closeButton.addActionListener { onDismiss() }
         val languages = JPanel(FlowLayout(FlowLayout.LEFT, 8, 0)).apply {
             isOpaque = false
@@ -729,6 +797,9 @@ class QuickTranslateDialog(
     private fun createBottomPanel(): JPanel {
         moreButton.foreground = if (FlatSVGIcon.isDarkLaf()) Color(129, 178, 255) else Color(25, 103, 210)
         originalLabel.font = originalLabel.font.deriveFont(Font.BOLD)
+        editHintLabel.font = editHintLabel.font.deriveFont((editHintLabel.font.size - 2).coerceAtLeast(10).toFloat())
+        editHintLabel.foreground = UIManager.getColor("Label.disabledForeground") ?: Color.GRAY
+        pinButton.preferredSize = Dimension(112, 36)
         pinButton.addActionListener { onPinToggled() }
         listenButton.addActionListener { onListen() }
         copyButton.addActionListener { onCopy(); showCopyFeedback() }
@@ -742,8 +813,6 @@ class QuickTranslateDialog(
         }
         val right = JPanel(FlowLayout(FlowLayout.RIGHT, 7, 0)).apply {
             isOpaque = false
-            add(pinButton)
-            add(translatorComboBox)
             add(moreButton)
         }
         return JPanel(BorderLayout(8, 0)).apply {

@@ -58,6 +58,8 @@ collection = "Add to collection"
 coming_soon = "Available in a future update"
 swap = "Swap languages"
 original = "Original text"
+edit_hint = "Edit to translate again"
+translator = "Translator"
 
 # ===================================================================
 # MAIN APPLICATION WINDOW
