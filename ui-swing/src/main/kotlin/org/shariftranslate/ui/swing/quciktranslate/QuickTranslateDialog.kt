@@ -700,7 +700,7 @@ class QuickTranslateDialog(
         val gc = graphicsConfiguration ?: return
         val maxHeight = (gc.bounds.height * MAX_HEIGHT_SCALE).toInt()
         val targetHeight = (startHeight + if (expand) 175 else -175)
-            .coerceIn(minimumSize.height, maxHeight)
+            .coerceIn(minOf(minimumSize.height, maxHeight), maxHeight)
         var step = 0
         expandTimer = Timer(16) { event ->
             step++

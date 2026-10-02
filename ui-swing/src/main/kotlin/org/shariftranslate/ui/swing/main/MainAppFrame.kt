@@ -1,5 +1,7 @@
 package org.shariftranslate.ui.swing.main
 
+import org.shariftranslate.ui.swing.shared.util.fitToScreen
+
 import com.formdev.flatlaf.FlatLaf
 import com.formdev.flatlaf.extras.components.FlatButton
 import com.formdev.flatlaf.util.FontUtils
@@ -269,6 +271,7 @@ class MainAppFrame(
             mainContentView.render(mainStore.state.value, settingsStore.state.value)
             pack()
             if (config.mainWindowPosition == null) setLocationRelativeTo(null)
+            fitToScreen()
 
             // Enforce Input → Output → Extra (→ Input) Tab cycle across all layouts.
             // In Compact layout the policy also switches tabs so hidden panes become

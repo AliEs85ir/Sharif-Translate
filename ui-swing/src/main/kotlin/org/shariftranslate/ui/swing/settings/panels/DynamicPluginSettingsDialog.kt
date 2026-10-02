@@ -1,5 +1,6 @@
 package org.shariftranslate.ui.swing.settings.panels
 
+import org.shariftranslate.ui.swing.shared.util.fitToScreen
 import org.shariftranslate.api.plugin.PluginSettings
 import org.shariftranslate.core.localization.LocalizationManager
 import org.shariftranslate.core.plugin.settings.*
@@ -108,6 +109,7 @@ class DynamicPluginSettingsDialog(
         preferredSize = Dimension(640, 500)
         pack()
         setLocationRelativeTo(owner)
+        fitToScreen()
     }
 
     // =========================================================================

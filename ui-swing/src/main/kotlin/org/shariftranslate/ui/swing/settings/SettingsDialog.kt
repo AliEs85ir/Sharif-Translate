@@ -1,5 +1,7 @@
 package org.shariftranslate.ui.swing.settings
 
+import org.shariftranslate.ui.swing.shared.util.fitToScreen
+
 import com.formdev.flatlaf.extras.FlatSVGIcon
 import org.shariftranslate.api.plugin.NotificationType
 import com.github.michaelbull.result.getError
@@ -47,6 +49,9 @@ class SettingsDialog(
     private val resumeGlobalHotkeys: (() -> Unit)? = null,
 ) : JDialog(owner, "Settings", true) {
 
+    private val themeListener = java.beans.PropertyChangeListener { evt ->
+        if (evt.propertyName == "lookAndFeel") SwingUtilities.invokeLater { if (isDisplayable) updateBorders() }
+    }
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     // ── Nav items (ordered) ───────────────────────────────────────────────────
@@ -139,9 +144,7 @@ class SettingsDialog(
 
         // Apply borders based on current theme, then keep them fresh on theme changes
         updateBorders()
-        UIManager.addPropertyChangeListener { evt ->
-            if (evt.propertyName == "lookAndFeel") SwingUtilities.invokeLater { updateBorders() }
-        }
+        UIManager.addPropertyChangeListener(themeListener)
 
         rootPane.registerKeyboardAction(
             { cancelAndClose() },
@@ -160,6 +163,7 @@ class SettingsDialog(
         preferredSize = Dimension(1020, 700)
         pack()
         setLocationRelativeTo(owner)
+        fitToScreen()
 
         tree.setSelectionRow(0)
     }
@@ -238,7 +242,7 @@ class SettingsDialog(
     private fun buildSidebar(): JPanel {
         val treeScroll = JScrollPane(tree).apply {
             border = null
-            horizontalScrollBarPolicy = JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
+            horizontalScrollBarPolicy = JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED
             verticalScrollBarPolicy = JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED
         }
 
@@ -260,7 +264,7 @@ class SettingsDialog(
         contentArea.components.filterIsInstance<JScrollPane>().forEach { contentArea.remove(it) }
         contentArea.add(JScrollPane(panel).apply {
             border = null
-            horizontalScrollBarPolicy = JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
+            horizontalScrollBarPolicy = JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED
             verticalScrollBarPolicy = JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED
             verticalScrollBar.unitIncrement = 16
         }, BorderLayout.CENTER)
@@ -408,6 +412,7 @@ class SettingsDialog(
     }
 
     override fun dispose() {
+        UIManager.removePropertyChangeListener(themeListener)
         scope.cancel()
         super.dispose()
     }

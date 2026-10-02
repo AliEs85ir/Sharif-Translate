@@ -1,5 +1,6 @@
 package org.shariftranslate.ui.swing.dictionary
 
+import org.shariftranslate.ui.swing.shared.util.fitToScreen
 import org.shariftranslate.core.main.domain.model.ServiceInfo
 import java.awt.BorderLayout
 import java.awt.Dimension
@@ -154,6 +155,7 @@ class DictionaryDialog(owner: Frame) : JDialog(owner, false) {
             preferredSize = Dimension(560, 520)
             pack()
             setLocationRelativeTo(owner)
+        fitToScreen()
         }
     }
 

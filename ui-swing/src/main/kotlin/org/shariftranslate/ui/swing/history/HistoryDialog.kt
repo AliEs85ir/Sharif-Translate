@@ -1,5 +1,6 @@
 package org.shariftranslate.ui.swing.history
 
+import org.shariftranslate.ui.swing.shared.util.fitToScreen
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.Frame
@@ -107,6 +108,7 @@ class HistoryDialog(owner: Frame) : JDialog(owner, false) {
             preferredSize = Dimension(760, 480)
             pack()
             setLocationRelativeTo(owner)
+        fitToScreen()
         }
     }
 

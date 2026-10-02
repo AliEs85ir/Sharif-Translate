@@ -1,5 +1,6 @@
 package org.shariftranslate.ui.swing.about
 
+import org.shariftranslate.ui.swing.shared.util.fitToScreen
 import com.formdev.flatlaf.FlatClientProperties
 import com.formdev.flatlaf.FlatClientProperties.BUTTON_TYPE
 import java.awt.Color
@@ -146,6 +147,7 @@ class InfoDialog(owner: Frame) : JDialog(owner, true) {
 
         pack()
         setLocationRelativeTo(owner)
+        fitToScreen()
         isVisible = true
     }
 

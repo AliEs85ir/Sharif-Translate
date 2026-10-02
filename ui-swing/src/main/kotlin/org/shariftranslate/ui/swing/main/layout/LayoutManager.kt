@@ -29,9 +29,9 @@ class LayoutManager(
     private var currentIsRtl: Boolean = false
 
     fun switchLayout(layoutId: String, isRtl: Boolean = currentIsRtl) {
-        currentIsRtl = isRtl
-        if (layoutId == currentLayoutId) return
-        SwingUtilities.invokeLater {
+        if (layoutId == currentLayoutId && isRtl == currentIsRtl) return
+        val arrange = Runnable {
+            currentIsRtl = isRtl
             detachAll()
             container.removeAll()
 
@@ -44,6 +44,7 @@ class LayoutManager(
             container.revalidate()
             container.repaint()
         }
+        if (SwingUtilities.isEventDispatchThread()) arrange.run() else SwingUtilities.invokeLater(arrange)
     }
 
     private fun detachAll() {

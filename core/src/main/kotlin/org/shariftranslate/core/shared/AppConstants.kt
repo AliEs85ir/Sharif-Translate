@@ -47,12 +47,12 @@ object AppConstants {
     // ============================================================
 
     /** Default main window dimensions on first launch. */
-    const val DEFAULT_WINDOW_WIDTH = 500
-    const val DEFAULT_WINDOW_HEIGHT = 380
+    const val DEFAULT_WINDOW_WIDTH = 640
+    const val DEFAULT_WINDOW_HEIGHT = 600
 
     /** Minimum allowed window dimensions. */
     const val MIN_WINDOW_WIDTH = 450
-    const val MIN_WINDOW_HEIGHT = 260
+    const val MIN_WINDOW_HEIGHT = 480
 
     /** Default quick translate popup dimensions. */
     const val DEFAULT_POPUP_WIDTH = 450

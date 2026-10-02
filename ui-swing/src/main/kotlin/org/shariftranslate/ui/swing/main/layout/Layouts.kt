@@ -23,6 +23,8 @@ sealed interface LayoutComponentRefs {
     ) : LayoutComponentRefs {
         override fun updateExtraOutputVisibility(visible: Boolean, extraPanel: JComponent) {
             SwingUtilities.invokeLater {
+                val changed = extraPanel.isVisible != visible || (extraSplit.dividerSize == 0) == visible
+                if (!changed) return@invokeLater
                 val wasContinuous = extraSplit.isContinuousLayout
                 extraSplit.isContinuousLayout = false
                 extraPanel.isVisible = visible
@@ -49,7 +51,11 @@ sealed interface LayoutComponentRefs {
     ) : LayoutComponentRefs {
         override fun updateExtraOutputVisibility(visible: Boolean, extraPanel: JComponent) {
             SwingUtilities.invokeLater {
-                val extraIndex = tabbedPane.indexOfComponent(extraPanel.parent) // Find by component
+                val extraIndex = (0 until tabbedPane.tabCount).firstOrNull {
+                    val tab = tabbedPane.getComponentAt(it)
+                    tab === extraPanel || SwingUtilities.isDescendingFrom(extraPanel, tab)
+                } ?: -1
+                extraPanel.isVisible = visible
                 if (visible && extraIndex == -1) {
                     tabbedPane.addTab("Extra", LayoutBuilders.wrapContent(extraPanel))
                 } else if (!visible && extraIndex != -1) {
@@ -190,7 +196,8 @@ object ClassicLayout : LayoutStrategy {
             add(components.outputPanel, BorderLayout.CENTER)
         }
         val mainSplit = LayoutBuilders.createVerticalSplit(
-            top = components.inputPanel, bottom = outputSection, resizeWeight = 0.5
+            top = components.inputPanel, bottom = outputSection, resizeWeight = 0.5,
+            topMinHeight = 90, bottomMinHeight = 130
         )
         val extraSplit = LayoutBuilders.createVerticalSplit(
             top = mainSplit,

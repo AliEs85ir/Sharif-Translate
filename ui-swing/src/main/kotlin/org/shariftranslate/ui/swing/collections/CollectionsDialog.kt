@@ -1,5 +1,6 @@
 package org.shariftranslate.ui.swing.collections
 
+import org.shariftranslate.ui.swing.shared.util.fitToScreen
 import org.shariftranslate.core.collections.CollectionKind
 import org.shariftranslate.core.collections.CollectionRepository
 import org.shariftranslate.core.collections.ItemSort
@@ -34,6 +35,7 @@ class CollectionsDialog(
         minimumSize = Dimension(720, 430)
         setSize(820, 520)
         setLocationRelativeTo(owner)
+        fitToScreen()
         defaultCloseOperation = HIDE_ON_CLOSE
         sortBox.renderer = DefaultListCellRenderer().also { renderer ->
             sortBox.setRenderer { list, value, index, selected, focus ->

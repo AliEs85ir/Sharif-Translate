@@ -229,9 +229,7 @@ class MainContentView(
     fun render(mainState: MainState, settingsState: SettingsState) {
         val config = settingsState.workingConfiguration
 
-        if (lastState == null || lastState?.second?.workingConfiguration?.layoutPresetId != config.layoutPresetId) {
-            layoutManager.switchLayout(config.layoutPresetId, localizer.isRtl)
-        }
+        layoutManager.switchLayout(config.layoutPresetId, localizer.isRtl)
 
         if (lastState == null ||
             lastState?.second?.workingConfiguration?.toolbarVisibility != config.toolbarVisibility ||

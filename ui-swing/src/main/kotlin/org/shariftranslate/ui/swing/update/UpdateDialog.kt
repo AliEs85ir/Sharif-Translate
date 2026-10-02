@@ -1,5 +1,6 @@
 package org.shariftranslate.ui.swing.update
 
+import org.shariftranslate.ui.swing.shared.util.fitToScreen
 import com.formdev.flatlaf.FlatClientProperties
 import com.formdev.flatlaf.util.UIScale
 import org.commonmark.node.Image
@@ -182,6 +183,7 @@ class UpdateDialog(owner: Frame) : JDialog(owner, false) {
             pack()
             minimumSize = Dimension(UIScale.scale(480), UIScale.scale(380))
             setLocationRelativeTo(owner)
+        fitToScreen()
         }
         isVisible = true
         toFront()
