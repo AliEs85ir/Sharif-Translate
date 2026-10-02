@@ -26,9 +26,7 @@ class WindowPanel(
     private lateinit var autoSizeCheck: JCheckBox
     private lateinit var autoPositionCheck: JCheckBox
     private lateinit var transparencySpinner: JSpinner
-    private lateinit var popupIdleSpinner: JSpinner
     private lateinit var dictTransparencySpinner: JSpinner
-    private lateinit var dictIdleSpinner: JSpinner
     private lateinit var closeButtonCombo: JComboBox<CloseButtonBehaviorInfo>
 
     init {
@@ -133,22 +131,7 @@ class WindowPanel(
             }
         )
 
-        popupIdleSpinner = JSpinner(SpinnerNumberModel(3, 2, 60, 1)).apply {
-            addChangeListener {
-                if (!isUpdatingFromState) {
-                    applyDraft(store) { it.copy(popupIdleTimeoutSeconds = value as Int) }
-                }
-            }
-        }
-        addRow(
-            localizationManager.getString("settings_window.popup_idle_timeout"),
-            JPanel(BorderLayout(8, 0)).apply {
-                isOpaque = false
-                add(popupIdleSpinner, BorderLayout.LINE_START)
-                add(JLabel(localizationManager.getString("settings_window.seconds_unit")), BorderLayout.CENTER)
-            }
-        )
-        addHint(localizationManager.getString("settings_window.popup_idle_hint"))
+
 
         // Dictionary Popup sub-section
         addSubSeparator(localizationManager.getString("settings_window.dict_popup_sub"))
@@ -169,22 +152,7 @@ class WindowPanel(
             }
         )
 
-        dictIdleSpinner = JSpinner(SpinnerNumberModel(8, 2, 60, 1)).apply {
-            addChangeListener {
-                if (!isUpdatingFromState) {
-                    applyDraft(store) { it.copy(quickDictionaryIdleTimeoutSeconds = value as Int) }
-                }
-            }
-        }
-        addRow(
-            localizationManager.getString("settings_window.popup_idle_timeout"),
-            JPanel(BorderLayout(8, 0)).apply {
-                isOpaque = false
-                add(dictIdleSpinner, BorderLayout.LINE_START)
-                add(JLabel(localizationManager.getString("settings_window.seconds_unit")), BorderLayout.CENTER)
-            }
-        )
-        addHint(localizationManager.getString("settings_window.popup_idle_hint"))
+
 
         // ── Close Button Behavior ─────────────────────────────────────────────
         addSeparator(localizationManager.getString("settings_window.close_behavior_group"))
@@ -231,9 +199,7 @@ class WindowPanel(
             autoSizeCheck.isSelected = c.isPopupAutoSizeEnabled
             autoPositionCheck.isSelected = c.isPopupAutoPositionEnabled
             transparencySpinner.value = c.popupTransparencyPercentage.coerceIn(5, 50)
-            popupIdleSpinner.value = c.popupIdleTimeoutSeconds
             dictTransparencySpinner.value = c.quickDictionaryTransparencyPercentage.coerceIn(5, 50)
-            dictIdleSpinner.value = c.quickDictionaryIdleTimeoutSeconds
             closeButtonCombo.selectedItem = (0 until closeButtonCombo.itemCount)
                 .map { closeButtonCombo.getItemAt(it) }
                 .find { it.behavior == c.closeButtonBehavior }

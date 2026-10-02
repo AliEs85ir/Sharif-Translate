@@ -142,9 +142,6 @@ class QuickTranslateDialog(
     private var editDebounceTimer: Timer? = null
     private var isSettingOriginalText = false
 
-    // idle/auto-hide manager (single timer)
-    private var idleHideTimer: Timer? = null
-
     // flags
     private var isDragging = false
     private var isResizing = false
@@ -154,10 +151,11 @@ class QuickTranslateDialog(
 
     private var lastRenderedText: String? = null
 
+    private val outsideClicks = PopupOutsideClickListener(this, { isPinned }) { onDismiss() }
+
     // mouse presence detection via AWT
     private var awtMouseListener: AWTEventListener? = null
     private var isMouseOver = false
-    private var isLanguageMenuOpen = false
 
     init {
         isUndecorated = true
@@ -370,11 +368,9 @@ class QuickTranslateDialog(
         updatePinButtonStyle(state.isPinned)
 
         if (state.isPinned) {
-            stopIdleHide()
             fadeTo(1f, FADE_MS)
         } else {
             applyTransparency()
-            startIdleHide()
         }
     }
 
@@ -433,7 +429,7 @@ class QuickTranslateDialog(
         isVisible = true
         focusableWindowState = true
         installAwtMouseListener()
-        if (!isPinned) startIdleHide()
+        outsideClicks.start()
     }
 
     private fun hideDialog() {
@@ -441,7 +437,7 @@ class QuickTranslateDialog(
         fadeTimer?.stop()
         expandTimer?.stop()
         editDebounceTimer?.stop()
-        stopIdleHide()
+        outsideClicks.stop()
         uninstallAwtMouseListener()
         isVisible = false
         focusableWindowState = false
@@ -456,55 +452,24 @@ class QuickTranslateDialog(
         }
     }
 
-    private fun startIdleHide() {
-        // restart single idle timer — reads live config each call so changes take effect immediately
-        val idleHideDelayMs = (currentConfig?.idleTimeoutSeconds ?: 3) * 1000
-        idleHideTimer?.stop()
-        idleHideTimer = Timer(idleHideDelayMs) { event ->
-            if (detailsExpanded && isFocused && originalText.isFocusOwner) {
-                startIdleHide()
-            } else {
-                if (!isPinned) fadeTo(0f, FADE_MS) // fade out visually
-                Timer(FADE_MS + 20) {
-                    if (!isPinned && !isMouseOver && !isLanguageMenuOpen) onDismiss()
-                    (it.source as Timer).stop()
-                }.apply { isRepeats = false; start() }
-            }
-            (event.source as Timer).stop()
-        }.apply {
-            isRepeats = false
-            start()
-        }
-    }
-
-    private fun stopIdleHide() {
-        idleHideTimer?.stop()
-    }
-
     private fun installAwtMouseListener() {
         if (awtMouseListener != null) return
         awtMouseListener = AWTEventListener { ev ->
             val me = ev as? MouseEvent ?: return@AWTEventListener
             if (me.id != MouseEvent.MOUSE_MOVED && me.id != MouseEvent.MOUSE_ENTERED && me.id != MouseEvent.MOUSE_EXITED) return@AWTEventListener
             SwingUtilities.invokeLater {
+                if (!isVisible) return@invokeLater
                 val p = MouseInfo.getPointerInfo()?.location ?: return@invokeLater
                 val cp = Point(p)
                 SwingUtilities.convertPointFromScreen(cp, contentPane)
                 val over = contentPane.contains(cp)
                 if (over != isMouseOver) {
                     isMouseOver = over
-                    if (isMouseOver || isLanguageMenuOpen) {
-                        stopIdleHide()
+                    if (isMouseOver) {
                         fadeTo(1f, FADE_MS)
-                    } else {
-                        if (!isPinned) {
-                            applyTransparency()
-                            startIdleHide()
-                        }
+                    } else if (!isPinned) {
+                        applyTransparency()
                     }
-                } else {
-                    // mouse moved inside window: reset idle timer
-                    if (isMouseOver && !isPinned && !isLanguageMenuOpen) startIdleHide()
                 }
             }
         }
@@ -673,19 +638,6 @@ class QuickTranslateDialog(
         val languages = state.availableLanguages.filter { source || it != LanguageCode.AUTO }
         if (languages.isEmpty()) return
         val popup = JPopupMenu().apply { border = EmptyBorder(8, 8, 8, 8) }
-        isLanguageMenuOpen = true
-        stopIdleHide()
-        popup.addPopupMenuListener(object : javax.swing.event.PopupMenuListener {
-            override fun popupMenuWillBecomeVisible(e: javax.swing.event.PopupMenuEvent) {}
-            override fun popupMenuWillBecomeInvisible(e: javax.swing.event.PopupMenuEvent) {
-                isLanguageMenuOpen = false
-                if (!isPinned) startIdleHide()
-            }
-            override fun popupMenuCanceled(e: javax.swing.event.PopupMenuEvent) {
-                isLanguageMenuOpen = false
-                if (!isPinned) startIdleHide()
-            }
-        })
         val search = JTextField().apply {
             putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, "⌕")
             preferredSize = Dimension(215, 32)
@@ -857,9 +809,8 @@ class QuickTranslateDialog(
             .dragInsets(dragInsets)
             .minimumSize(minimumSize)
             .onResizeStart {
-                // freeze opacity and suspend idle timer
+                // Keep the window fully visible while resizing.
                 isResizing = true
-                stopIdleHide()
                 fadeTo(1f, FADE_MS)
             }
             .onResizeEnd {
@@ -881,7 +832,6 @@ class QuickTranslateDialog(
 
                 if (!isPinned) {
                     applyTransparency()
-                    startIdleHide()
                 }
             }
             .build()
@@ -892,14 +842,12 @@ class QuickTranslateDialog(
             override fun mousePressed(e: MouseEvent) {
                 isDragging = true
                 wasManuallyMoved = true // mark manual move immediately
-                stopIdleHide()
-                autoHideStopForDrag()
+                showOpaqueForDrag()
             }
 
             override fun mouseReleased(e: MouseEvent) {
                 isDragging = false
                 onSavePosition(location.toPosition())
-                if (!isPinned) startIdleHide()
             }
         }
 
@@ -910,37 +858,23 @@ class QuickTranslateDialog(
         addMouseListener(dragListener)
         addMouseMotionListener(dragListener)
 
-        addWindowFocusListener(object : WindowFocusListener {
-            override fun windowGainedFocus(e: WindowEvent?) {
-                // reset idle when gaining focus
-                if (!isPinned) startIdleHide()
-            }
-
-            override fun windowLostFocus(e: WindowEvent?) {
-                // don't hide immediately on focus loss; start idle hide instead
-                if (!isPinned) startIdleHide()
-            }
-        })
-
         addWindowListener(object : WindowAdapter() {
             override fun windowClosing(e: WindowEvent) = onDismiss()
             override fun windowClosed(e: WindowEvent) {
+                outsideClicks.stop()
+                fadeTimer?.stop()
+                expandTimer?.stop()
+                editDebounceTimer?.stop()
+                copyFeedbackTimer?.stop()
+                resizeSaveTimer?.stop()
                 uninstallAwtMouseListener()
             }
         })
 
-        rootPane.registerKeyboardAction(
-            {
-                if (!isPinned) onDismiss()
-            },
-            KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
-            JComponent.WHEN_IN_FOCUSED_WINDOW
-        )
     }
 
-    private fun autoHideStopForDrag() {
-        // used to prevent premature hiding while user drags
-        stopIdleHide()
+    private fun showOpaqueForDrag() {
+        // Keep the window fully visible while dragging.
         fadeTo(1f, FADE_MS / 2)
     }
 }

@@ -8,6 +8,7 @@ import org.shariftranslate.core.main.mvi.MainState
 import org.shariftranslate.core.settings.data.Configuration
 import org.shariftranslate.core.settings.data.ExtraOutputType
 import org.shariftranslate.core.settings.data.HotkeyAction
+import org.shariftranslate.core.settings.data.HotkeyScope
 import org.shariftranslate.core.settings.data.TextSource
 import org.shariftranslate.core.settings.mvi.SettingsIntent
 import org.shariftranslate.core.settings.mvi.SettingsState
@@ -253,7 +254,7 @@ class MainContentView(
      */
     private fun updateTranslateKeyStroke(config: Configuration) {
         val binding = config.hotkeys.find { it.action == HotkeyAction.TRANSLATE }
-        val newStroke = binding?.takeIf { it.isEnabled }?.toKeyStroke()
+        val newStroke = binding?.takeIf { it.isEnabled && it.scope == HotkeyScope.LOCAL }?.toKeyStroke()
         if (newStroke == currentTranslateKeyStroke) return
         val old = currentTranslateKeyStroke
         currentTranslateKeyStroke = newStroke
@@ -272,7 +273,8 @@ class MainContentView(
      */
     private fun updateFocusKeyStrokes(config: Configuration) {
         fun resolveStroke(action: HotkeyAction): KeyStroke? =
-            config.hotkeys.find { it.action == action }?.takeIf { it.isEnabled }?.toKeyStroke()
+            config.hotkeys.find { it.action == action }
+                ?.takeIf { it.isEnabled && it.scope == HotkeyScope.LOCAL }?.toKeyStroke()
 
         val newInput  = resolveStroke(HotkeyAction.FOCUS_INPUT)
         val newOutput = resolveStroke(HotkeyAction.FOCUS_OUTPUT)

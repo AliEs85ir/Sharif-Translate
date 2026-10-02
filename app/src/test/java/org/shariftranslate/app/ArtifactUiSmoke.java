@@ -15,7 +15,8 @@ public class ArtifactUiSmoke {
         app.setDaemon(true);
         app.start();
         JFrame[] found = new JFrame[1];
-        for (int i = 0; i < 120 && found[0] == null; i++) {
+        int startupPolls = Integer.getInteger("shariftranslate.uiSmokePolls", 120);
+        for (int i = 0; i < startupPolls && found[0] == null; i++) {
             SwingUtilities.invokeAndWait(() -> {
                 for (Frame f : Frame.getFrames()) {
                     if (f.getClass().getName().equals("org.shariftranslate.ui.swing.main.MainAppFrame")) found[0] = (JFrame) f;

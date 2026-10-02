@@ -173,15 +173,19 @@ class MainAppFrame(
         onNotificationsClicked = { notificationPopover.show(mainContentView.statusBar) }
     )
 
+    private val localHotkeyMappings = mutableMapOf<KeyStroke, String>()
+
     private val globalKeyListener = MainGlobalKeyListener(
         scope = appScope,
         onShowApp = { text ->
-            mainStore.dispatch(MainIntent.UpdateInputText(text))
-            mainStore.dispatch(MainIntent.Translate(text))
+            if (text.isNotBlank()) {
+                mainStore.dispatch(MainIntent.UpdateInputText(text))
+                mainStore.dispatch(MainIntent.Translate(text))
+            }
             runOnUi { showAndFocus() }
         },
         onShowQuickTranslate = { text ->
-            appScope.launch { mainStore.dispatch(MainIntent.ShowQuickTranslate(text)) }
+            mainStore.dispatch(MainIntent.ShowQuickTranslate(text))
         },
         onListenToText = { text ->
             mainStore.dispatch(MainIntent.ListenToText(TextSource.Input, text))
@@ -210,7 +214,18 @@ class MainAppFrame(
                 mainStore.dispatch(MainIntent.ShowQuickDictionary(selectedText, lang))
             }
         },
-        onTranslate = { mainStore.dispatch(MainIntent.Translate()) }
+        onTranslate = { mainStore.dispatch(MainIntent.Translate()) },
+        onFocusPanel = { action ->
+            runOnUi {
+                showAndFocus()
+                when (action) {
+                    HotkeyAction.FOCUS_INPUT -> mainContentView.switchToAndFocusInput()
+                    HotkeyAction.FOCUS_OUTPUT -> mainContentView.switchToAndFocusOutput()
+                    HotkeyAction.FOCUS_EXTRA_OUTPUT -> mainContentView.switchToAndFocusExtraOutput()
+                    else -> Unit
+                }
+            }
+        }
     )
 
     private val statusBarController = StatusBarController(
@@ -485,17 +500,14 @@ class MainAppFrame(
             }
         }
 
-        // Hotkey binding changes — re-register whenever saved config changes
+        // Apply enabled-state changes too, even when no binding changed.
         appScope.launch(handler) {
             settingsStore.state
-                .map { it.originalConfiguration.hotkeys }
+                .map { it.workingConfiguration.let { config -> config.hotkeys to config.isGlobalHotkeysEnabled } }
                 .distinctUntilChanged()
-                .drop(1)
-                .collect { bindings ->
+                .collect { (bindings, enabled) ->
+                    globalKeyListener.setHotkeysEnabled(enabled)
                     globalKeyListener.updateBindings(bindings)
-                    globalKeyListener.setHotkeysEnabled(
-                        settingsStore.state.value.originalConfiguration.isGlobalHotkeysEnabled
-                    )
                     withContext(Dispatchers.Swing) { registerLocalHotkeys() }
                 }
         }
@@ -689,13 +701,17 @@ class MainAppFrame(
         // which is always the case (text pane, buttons, etc.).
         // WHEN_FOCUSED would only fire if rootPane itself held focus — which never happens.
         val inputMap = rootPane.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
-        inputMap.clear()
-        rootPane.actionMap.clear()
+        localHotkeyMappings.forEach { (stroke, action) ->
+            if (inputMap.get(stroke) == action) inputMap.remove(stroke)
+            rootPane.actionMap.remove(action)
+        }
+        localHotkeyMappings.clear()
 
         globalKeyListener.getLocalBindings().forEach { binding ->
             val keyStroke = binding.toKeyStroke() ?: return@forEach
             val actionKey = "localHotkey_${binding.action.name}"
             inputMap.put(keyStroke, actionKey)
+            localHotkeyMappings[keyStroke] = actionKey
             rootPane.actionMap.put(actionKey, object : AbstractAction() {
                 override fun actionPerformed(e: ActionEvent) {
                     // FOCUS_* are LOCAL-only and require layout-aware handling (Compact layout must

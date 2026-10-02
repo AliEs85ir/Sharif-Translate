@@ -4,7 +4,6 @@ import org.shariftranslate.core.settings.data.HotkeyAction
 import org.shariftranslate.core.settings.data.HotkeyBinding
 import org.shariftranslate.core.settings.data.HotkeyScope
 import com.github.kwhat.jnativehook.GlobalScreen
-import com.github.kwhat.jnativehook.NativeHookException
 import com.github.kwhat.jnativehook.keyboard.NativeKeyEvent
 import com.github.kwhat.jnativehook.keyboard.NativeKeyListener
 import com.tulskiy.keymaster.common.Provider
@@ -13,7 +12,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.awt.Robot
 import java.awt.Toolkit
-import java.awt.datatransfer.DataFlavor
+import com.sun.jna.Platform
+import com.sun.jna.platform.win32.User32
+import org.shariftranslate.ui.swing.shared.util.NativeInputHook
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CancellationException
 import java.awt.event.KeyEvent
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -47,7 +50,8 @@ class MainGlobalKeyListener(
     private val onReplaceWithTranslation: (String) -> Unit,
     private val onCycleTargetLanguage: () -> Unit,
     private val onShowDictionary: (String) -> Unit = {},
-    private val onTranslate: () -> Unit = {}
+    private val onTranslate: () -> Unit = {},
+    private val onFocusPanel: (HotkeyAction) -> Unit = {}
 ) {
 
     private var provider: Provider? = null
@@ -61,20 +65,23 @@ class MainGlobalKeyListener(
 
     @Volatile private var bindings: List<HotkeyBinding> = HotkeyBinding.DEFAULTS
 
-    fun initialize() {
-        if (!initialized.compareAndSet(false, true)) return
-        try {
-            initJKeyMaster()
-            initJNativeHook()
-        } catch (e: Exception) {
-            initialized.set(false)   // allow retry if initialization itself failed
-            System.err.println("Hotkey initialization failed: ${e.message}")
-            e.printStackTrace()
+    @Synchronized fun initialize() {
+        if (initialized.compareAndSet(false, true)) {
+            try {
+                initJKeyMaster()
+            } catch (e: Exception) {
+                initialized.set(false)   // allow retry if initialization itself failed
+                System.err.println("Hotkey initialization failed: ${e.message}")
+            }
         }
+        // Native-hook failure must not disable regular registered shortcuts.
+        try { initJNativeHook() }
+        catch (e: Exception) { System.err.println("Native key hook failed: ${e.message}") }
     }
 
-    fun updateBindings(newBindings: List<HotkeyBinding>) {
-        bindings = newBindings
+    @Synchronized fun updateBindings(newBindings: List<HotkeyBinding>) {
+        if (bindings == newBindings) return
+        bindings = newBindings.toList()
         if (!initialized.get()) return
         try {
             provider?.reset()
@@ -84,9 +91,9 @@ class MainGlobalKeyListener(
         }
     }
 
-    fun setHotkeysEnabled(enabled: Boolean) {
-        if (!initialized.get()) return
+    @Synchronized fun setHotkeysEnabled(enabled: Boolean) {
         if (hotkeysEnabled.getAndSet(enabled) == enabled) return
+        if (!initialized.get()) return
         if (enabled) enableHotkeys() else disableHotkeys()
     }
 
@@ -99,26 +106,20 @@ class MainGlobalKeyListener(
     fun getLocalBindings(): List<HotkeyBinding> =
         bindings.filter { it.scope == HotkeyScope.LOCAL && it.isEnabled && it.hasBinding }
 
-    fun shutdown() {
-        if (!initialized.get()) return
-        try {
-            provider?.reset()
-            provider?.stop()
-            provider = null
-            if (nativeHookRegistered) {
-                GlobalScreen.removeNativeKeyListener(sequenceListener)
-                GlobalScreen.unregisterNativeHook()
-                nativeHookRegistered = false
-            }
-        } catch (e: Exception) {
-            System.err.println("Hotkey manager shutdown error: ${e.message}")
-        } finally {
-            initialized.set(false)
+    @Synchronized fun shutdown() {
+        runCatching { provider?.reset() }
+        runCatching { provider?.stop() }
+        provider = null
+        if (nativeHookRegistered) {
+            GlobalScreen.removeNativeKeyListener(sequenceListener)
+            runCatching { NativeInputHook.release() }
+            nativeHookRegistered = false
         }
+        initialized.set(false)
     }
 
     private fun initJKeyMaster() {
-        provider = Provider.getCurrentProvider(false)
+        provider = if (Platform.isWindows()) WindowsHotkeyProvider() else Provider.getCurrentProvider(false)
             ?: throw Exception("Hotkey provider unavailable")
         registerGlobalHotkeys()
     }
@@ -132,6 +133,7 @@ class MainGlobalKeyListener(
      * silently abort registration of the remaining bindings.
      */
     private fun registerGlobalHotkeys() {
+        if (!hotkeysEnabled.get()) return
         val p = provider ?: return
 
         bindings
@@ -142,6 +144,7 @@ class MainGlobalKeyListener(
                 runCatching {
                     p.register(keyStroke) {
                         if (!hotkeysEnabled.get()) return@register
+                        if (binding !in bindings) return@register // Discard callbacks queued before a rebind.
                         dispatchAction(action)
                     }
                     println("[Hotkeys] Registered GLOBAL ${action.name}: $keyStroke")
@@ -160,26 +163,24 @@ class MainGlobalKeyListener(
     fun dispatchAction(action: HotkeyAction) {
         when (action) {
             HotkeyAction.SHOW_QUICK_TRANSLATE ->
-                scope.launch { handleSelectedText(onShowQuickTranslate) }
+                launchSelectedText(onShowQuickTranslate)
             HotkeyAction.LISTEN_TO_TEXT ->
-                scope.launch { handleSelectedText(onListenToText) }
+                launchSelectedText(onListenToText)
             HotkeyAction.OPEN_OCR ->
                 onOpenSnippingTool()
             HotkeyAction.SHOW_MAIN_WINDOW ->
-                scope.launch { handleSelectedText(onShowApp) }
+                launchSelectedText(onShowApp)
             HotkeyAction.REPLACE_WITH_TRANSLATION ->
-                scope.launch { handleSelectedText(onReplaceWithTranslation) }
+                launchSelectedText(onReplaceWithTranslation)
             HotkeyAction.CYCLE_TARGET_LANGUAGE ->
                 onCycleTargetLanguage()
             HotkeyAction.SHOW_DICTIONARY ->
-                scope.launch { handleSelectedText(onShowDictionary) }
+                launchSelectedText(onShowDictionary)
             HotkeyAction.TRANSLATE ->
                 onTranslate()
-            // Focus actions are LOCAL-scope only — handled by MainContentView's InputMap.
-            // Nothing to do here; the branch is required for exhaustive when.
             HotkeyAction.FOCUS_INPUT,
             HotkeyAction.FOCUS_OUTPUT,
-            HotkeyAction.FOCUS_EXTRA_OUTPUT -> Unit
+            HotkeyAction.FOCUS_EXTRA_OUTPUT -> onFocusPanel(action)
         }
     }
 
@@ -194,14 +195,10 @@ class MainGlobalKeyListener(
     }
 
     private fun initJNativeHook() {
-        try {
-            if (!nativeHookRegistered) {
-                GlobalScreen.registerNativeHook()
-                nativeHookRegistered = true
-            }
+        if (!nativeHookRegistered) {
+            NativeInputHook.acquire()
             GlobalScreen.addNativeKeyListener(sequenceListener)
-        } catch (ex: NativeHookException) {
-            throw Exception("Native hook registration failed", ex)
+            nativeHookRegistered = true
         }
     }
 
@@ -215,63 +212,67 @@ class MainGlobalKeyListener(
      *    (Hoyeun's request — user can disable it from the keyboard panel)
      */
     private inner class CustomSequenceListener : NativeKeyListener {
-        private var lastCtrlTime = 0L
-        private val threshold = 400
+        private val taps = CtrlTapSequence()
+
+        private fun enabled(): Boolean {
+            val binding = bindings.find { it.action == HotkeyAction.SHOW_MAIN_WINDOW }
+            return hotkeysEnabled.get() && !clipboardLock.get() &&
+                binding?.isEnabled == true && binding.isDoubleCtrlEnabled
+        }
+
+        override fun nativeKeyPressed(e: NativeKeyEvent) {
+            if (!enabled()) { taps.reset(); return }
+            if (e.modifiers and (NativeKeyEvent.SHIFT_MASK or NativeKeyEvent.ALT_MASK or NativeKeyEvent.META_MASK) != 0) {
+                taps.reset()
+                return
+            }
+            taps.pressed(e.keyCode == NativeKeyEvent.VC_CONTROL)
+        }
 
         override fun nativeKeyReleased(e: NativeKeyEvent) {
-            if (!hotkeysEnabled.get()) return
-            if (e.keyCode != NativeKeyEvent.VC_CONTROL) return
-
-            // Only fire if the binding exists, is enabled, AND the user
-            // has not opted out of the double-Ctrl mechanism specifically.
-            val binding = bindings.find { it.action == HotkeyAction.SHOW_MAIN_WINDOW }
-            if (binding == null || !binding.isEnabled || !binding.isDoubleCtrlEnabled) return
-
-            val now = System.currentTimeMillis()
-            if (now - lastCtrlTime < threshold) {
-                scope.launch { handleSelectedText(onShowApp) }
-            }
-            lastCtrlTime = now
+            if (!enabled()) { taps.reset(); return }
+            if (taps.released(e.keyCode == NativeKeyEvent.VC_CONTROL, System.nanoTime()))
+                launchSelectedText(onShowApp)
         }
     }
 
-    private suspend fun handleSelectedText(callback: (String) -> Unit) {
+    private fun launchSelectedText(callback: (String) -> Unit) {
+        // Claim before launching so rapid repeats cannot queue stale selection captures.
         if (!clipboardLock.compareAndSet(false, true)) return
-        try {
-            val clipboard = Toolkit.getDefaultToolkit().systemClipboard
-            val original  = runCatching { clipboard.getContents(null) }.getOrNull()
-            val originalText = original?.let {
-                runCatching { it.getTransferData(DataFlavor.stringFlavor).toString() }.getOrNull()
+        val job = scope.launch(Dispatchers.IO) {
+            try {
+                val text = SelectedTextCapture(
+                    Toolkit.getDefaultToolkit().systemClipboard, ::simulateCopy, ::waitForModifiers
+                ).capture() ?: return@launch
+                callback(text) // The original clipboard is already restored here.
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                System.err.println("Selected text capture failed: ${e.message}")
             }
-
-            var text: String? = null
-            repeat(2) {
-                simulateCopy()
-                delay(50)
-                text = runCatching {
-                    if (clipboard.isDataFlavorAvailable(DataFlavor.stringFlavor))
-                        clipboard.getData(DataFlavor.stringFlavor).toString().trim()
-                    else null
-                }.getOrNull()
-                if (!text.isNullOrEmpty()) return@repeat
-            }
-
-            if (text.isNullOrEmpty()) text = originalText ?: ""
-            callback(text)
-            original?.let { runCatching { clipboard.setContents(it, null) } }
-        } finally {
-            clipboardLock.set(false)
         }
+        job.invokeOnCompletion { clipboardLock.set(false) }
+    }
+
+    private suspend fun waitForModifiers(): Boolean {
+        if (!Platform.isWindows()) { delay(80); return true }
+        val keys = intArrayOf(KeyEvent.VK_CONTROL, KeyEvent.VK_SHIFT, KeyEvent.VK_ALT, KeyEvent.VK_WINDOWS)
+        repeat(100) {
+            if (keys.none { User32.INSTANCE.GetAsyncKeyState(it).toInt() and 0x8000 != 0 }) return true
+            delay(10)
+        }
+        return false // Avoid Ctrl+Shift+C / Ctrl+Alt+C while shortcut modifiers are held.
     }
 
     private fun simulateCopy() {
-        runCatching {
-            val robot = Robot()
-            robot.autoDelay = 20
+        val robot = Robot()
+        robot.autoDelay = 5
+        try {
             robot.keyPress(KeyEvent.VK_CONTROL)
             robot.keyPress(KeyEvent.VK_C)
+        } finally {
             robot.keyRelease(KeyEvent.VK_C)
             robot.keyRelease(KeyEvent.VK_CONTROL)
-        }.onFailure { System.err.println("Copy simulation failed: ${it.message}") }
+        }
     }
 }

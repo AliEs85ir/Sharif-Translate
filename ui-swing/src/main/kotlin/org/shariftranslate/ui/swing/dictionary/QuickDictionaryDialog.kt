@@ -22,7 +22,7 @@ import kotlin.math.abs
  * Mirrors the QuickTranslateDialog pattern:
  * - MODELESS JDialog, undecorated, always-on-top
  * - Auto-positions near mouse cursor
- * - Auto-hides after idle (unless pinned)
+ * - Dismisses on outside clicks (unless pinned)
  * - Fade animation on show/hide
  * - Draggable via header bar (ComponentMover)
  * - Resizable via border handles (ComponentResizer)
@@ -38,7 +38,6 @@ class QuickDictionaryDialog(
         const val PINNED_BORDER_WIDTH = 4
         const val FADE_MS = 160
         const val FADE_STEPS = 8
-        const val IDLE_HIDE_MS = 8000
         const val RESIZE_SAVE_DEBOUNCE_MS = 180
     }
 
@@ -132,9 +131,10 @@ class QuickDictionaryDialog(
 
     // Timers
     private var fadeTimer: Timer? = null
-    private var idleHideTimer: Timer? = null
     private var resizeSaveTimer: Timer? = null
     private var mouseExitDebounceTimer: Timer? = null
+
+    private val outsideClicks = PopupOutsideClickListener(this, { isPinned }) { currentState?.onClose?.invoke() }
 
     // Mouse over detection
     private var awtMouseListener: AWTEventListener? = null
@@ -420,11 +420,9 @@ class QuickDictionaryDialog(
         isPinned = state.isPinned
         updatePinButtonStyle(state.isPinned)
         if (state.isPinned) {
-            stopIdleHide()
             fadeTo(1f, FADE_MS)
         } else {
             applyTransparency()
-            startIdleHide()
         }
     }
 
@@ -467,12 +465,13 @@ class QuickDictionaryDialog(
         isVisible = true
         focusableWindowState = true
         installAwtMouseListener()
-        if (!isPinned) startIdleHide()
+        outsideClicks.start()
     }
 
     private fun hideDialog() {
         if (!isVisible) return
-        stopIdleHide()
+        fadeTimer?.stop()
+        outsideClicks.stop()
         uninstallAwtMouseListener()
         isVisible = false
         focusableWindowState = false
@@ -480,25 +479,6 @@ class QuickDictionaryDialog(
         val sz = size
         currentState?.onSavePosition?.invoke(Position(pos.x.coerceAtLeast(0), pos.y.coerceAtLeast(0)))
         currentState?.onSaveSize?.invoke(Size(sz.width, sz.height))
-    }
-
-    private fun startIdleHide() {
-        idleHideTimer?.stop()
-        val idleMs = (currentState?.config?.idleTimeoutSeconds ?: 8) * 1000
-        idleHideTimer = Timer(idleMs) { event ->
-            if (!isPinned) {
-                fadeTo(0f, FADE_MS)
-                Timer(FADE_MS + 20) {
-                    if (!isPinned) currentState?.onClose?.invoke()
-                    (it.source as Timer).stop()
-                }.apply { isRepeats = false; start() }
-            }
-            (event.source as Timer).stop()
-        }.apply { isRepeats = false; start() }
-    }
-
-    private fun stopIdleHide() {
-        idleHideTimer?.stop()
     }
 
     private fun fadeTo(targetOpacity: Float, durationMs: Int) {
@@ -542,9 +522,8 @@ class QuickDictionaryDialog(
 
                 isMouseOver = over
                 if (over) {
-                    // Mouse entered: cancel any pending exit-debounce, stop idle, fade to full opacity.
+                    // Mouse entered: cancel any pending exit-debounce, fade to full opacity.
                     mouseExitDebounceTimer?.stop()
-                    stopIdleHide()
                     fadeTo(1f, FADE_MS)
                 } else {
                     // Mouse exited: debounce before fading so that brief exits at the window
@@ -554,7 +533,6 @@ class QuickDictionaryDialog(
                     mouseExitDebounceTimer = Timer(120) {
                         if (!isMouseOver && !isPinned) {
                             applyTransparency()
-                            startIdleHide()
                         }
                         (it.source as Timer).stop()
                     }.apply { isRepeats = false; start() }
@@ -645,7 +623,6 @@ class QuickDictionaryDialog(
             .minimumSize(minimumSize)
             .onResizeStart {
                 isResizing = true
-                stopIdleHide()
                 fadeTo(1f, FADE_MS)
             }
             .onResizeEnd {
@@ -655,7 +632,6 @@ class QuickDictionaryDialog(
                     currentState?.onSaveSize?.invoke(size.toSize())
                     (it.source as Timer).stop()
                 }.apply { isRepeats = false; start() }
-                if (!isPinned) startIdleHide()
             }
             .build()
             .register(this)
@@ -664,7 +640,6 @@ class QuickDictionaryDialog(
             override fun mousePressed(e: MouseEvent) {
                 isDragging = true
                 wasManuallyMoved = true
-                stopIdleHide()
                 fadeTo(1f, FADE_MS / 2)
             }
             override fun mouseReleased(e: MouseEvent) {
@@ -673,7 +648,6 @@ class QuickDictionaryDialog(
                 currentState?.onSavePosition?.invoke(
                     Position(pos.x.coerceAtLeast(0), pos.y.coerceAtLeast(0))
                 )
-                if (!isPinned) startIdleHide()
             }
         }
         topPanel.addMouseListener(dragListener)
@@ -681,20 +655,15 @@ class QuickDictionaryDialog(
         addMouseListener(dragListener)
         addMouseMotionListener(dragListener)
 
-        addWindowFocusListener(object : WindowFocusListener {
-            override fun windowGainedFocus(e: WindowEvent?) { if (!isPinned) startIdleHide() }
-            override fun windowLostFocus(e: WindowEvent?) { if (!isPinned) startIdleHide() }
-        })
-
         addWindowListener(object : WindowAdapter() {
             override fun windowClosing(e: WindowEvent) { currentState?.onClose?.invoke() }
-            override fun windowClosed(e: WindowEvent) { uninstallAwtMouseListener() }
+            override fun windowClosed(e: WindowEvent) {
+                outsideClicks.stop()
+                fadeTimer?.stop()
+                resizeSaveTimer?.stop()
+                uninstallAwtMouseListener()
+            }
         })
 
-        rootPane.registerKeyboardAction(
-            { if (!isPinned) currentState?.onClose?.invoke() },
-            KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
-            JComponent.WHEN_IN_FOCUSED_WINDOW
-        )
     }
 }
