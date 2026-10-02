@@ -56,35 +56,29 @@ class PluginLoader(
      *
      * @return A [LoadedPluginResult] on success, or `null` if any step fails.
      */
-    fun loadPluginFromFile(jarFile: File): LoadedPluginResult? = runCatching {
-        val classLoader = URLClassLoader(arrayOf(jarFile.toURI().toURL()), javaClass.classLoader)
-
-        val plugin = ServiceLoader.load(Plugin::class.java, classLoader).firstOrNull()
-            ?: throw IllegalStateException("No Plugin implementation found via ServiceLoader in ${jarFile.name}. " +
-                    "Ensure META-INF/services/org.shariftranslate.api.plugin.Plugin is present.")
-
-        val manifest = getManifestFromJar(jarFile, classLoader)
-            ?: throw IllegalStateException("plugin.json is missing or could not be parsed in ${jarFile.name}")
-
-        // Delegate to ApiVersion — this checks both MAJOR and MINOR, not just MAJOR.
-        when (val compat = ApiVersion.isCompatible(manifest.minApiVersion)) {
-            is ApiVersion.CompatibilityResult.Compatible -> {
-                logger.debug("Plugin '${manifest.id}' API version ${manifest.minApiVersion} is compatible.")
+    fun loadPluginFromFile(jarFile: File): LoadedPluginResult? {
+        var classLoader: URLClassLoader? = null
+        return try {
+            // Validate metadata before executing plugin constructors or opening a persistent loader.
+            val manifest = getManifestFromJar(jarFile)
+                ?: error("plugin.json is missing or invalid in ${jarFile.name}")
+            when (val compat = ApiVersion.isCompatible(manifest.minApiVersion)) {
+                is ApiVersion.CompatibilityResult.Compatible -> Unit
+                is ApiVersion.CompatibilityResult.Incompatible -> error(compat.reason)
             }
-            is ApiVersion.CompatibilityResult.Incompatible -> {
-                logger.error(
-                    "Skipping '${manifest.id}' (v${manifest.version}): ${compat.reason}"
-                )
-                return null
-            }
+            classLoader = URLClassLoader(arrayOf(jarFile.toURI().toURL()), javaClass.classLoader)
+            val plugin = ServiceLoader.load(Plugin::class.java, classLoader).firstOrNull()
+                ?: error("No Plugin implementation found in ${jarFile.name}")
+            LoadedPluginResult(plugin, manifest, jarFile, Hashing.sha256(jarFile), classLoader)
+        } catch (e: Exception) {
+            classLoader?.close()
+            logger.error("Failed to load plugin from ${jarFile.name}: ${e.message}", e)
+            null
+        } catch (e: ServiceConfigurationError) {
+            classLoader?.close()
+            logger.error("Invalid plugin provider in ${jarFile.name}", e)
+            null
         }
-
-        val hash = Hashing.sha256(jarFile)
-        LoadedPluginResult(plugin, manifest, jarFile, hash, classLoader)
-
-    }.getOrElse { e ->
-        logger.error("Failed to load plugin from ${jarFile.name}: ${e.message}", e)
-        null
     }
 
     /**
@@ -93,10 +87,16 @@ class PluginLoader(
      */
     fun getManifestFromJar(jarFile: File, classLoader: ClassLoader? = null): PluginManifest? =
         runCatching {
-            val loader = classLoader
-                ?: URLClassLoader(arrayOf(jarFile.toURI().toURL()), javaClass.classLoader)
-            loader.getResourceAsStream("plugin.json")?.use { stream ->
-                stream.reader(Charsets.UTF_8).use { json.decodeFromString<PluginManifest>(it.readText()) }
+            // JarFile.use avoids locking an inspected JAR on Windows and cannot inherit
+            // another plugin's manifest from a parent classloader.
+            java.util.jar.JarFile(jarFile).use { jar ->
+                val entry = jar.getJarEntry("plugin.json") ?: return@use null
+                jar.getInputStream(entry).bufferedReader(Charsets.UTF_8).use {
+                    json.decodeFromString<PluginManifest>(it.readText()).also { manifest ->
+                        require(manifest.id.matches(Regex("[A-Za-z0-9][A-Za-z0-9._-]*"))) { "Invalid plugin ID" }
+                        require(!manifest.id.endsWith('.')) { "Invalid plugin ID" }
+                    }
+                }
             }
         }.getOrNull()
 }

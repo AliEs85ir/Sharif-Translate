@@ -233,6 +233,10 @@ internal class PluginLifecycleHandler(
 
         } catch (e: Throwable) {
             logger.error("Unexpected exception shutting down plugin '${container.id}'", e)
+        } finally {
+            (container.context as? ScopedPluginContext)?.cancelScope()
+            runCatching { (container.classLoader as? java.net.URLClassLoader)?.close() }
+                .onFailure { logger.error("Could not close plugin classloader", it) }
         }
     }
 }

@@ -51,6 +51,7 @@ class PluginKeyValueStore(private val appDataDirectory: File) {
 
     suspend fun deleteAllData(pluginId: String) {
         getDataStore(pluginId).edit { it.clear() }
-        dataStores.remove(pluginId)
+        // Keep the single DataStore instance: recreating it for the same path while
+        // its scope is alive causes IllegalStateException after a clean reinstall.
     }
 }

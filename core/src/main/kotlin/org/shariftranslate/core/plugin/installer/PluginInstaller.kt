@@ -70,8 +70,9 @@ internal class PluginInstaller(
 
         return try {
             val destinationJar = File(pluginsDir, sourceJar.name)
+            require(!destinationJar.exists()) { "A plugin file named '${sourceJar.name}' is already installed" }
             withContext(Dispatchers.IO) {
-                Files.copy(sourceJar.toPath(), destinationJar.toPath(), StandardCopyOption.REPLACE_EXISTING)
+                Files.copy(sourceJar.toPath(), destinationJar.toPath())
             }
 
             val result = loader.loadPluginFromFile(destinationJar)
@@ -97,9 +98,7 @@ internal class PluginInstaller(
         val container = registry.mutex.withLock { registry.remove(pluginId) } ?: return
         logger.info("Uninstalling plugin '$pluginId'...")
 
-        if (container.status == PluginStatus.ENABLED) {
-            lifecycleHandler.disable(container)
-        }
+        lifecycleHandler.shutdown(container)
         purgePluginSandbox(pluginId)
 
         val currentDisabled = settingsRepository.loadDisabledPluginIds()
