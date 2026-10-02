@@ -12,6 +12,7 @@ import org.shariftranslate.core.shared.arch.ServiceType
 import org.shariftranslate.core.shared.logging.LoggerFactory
 import com.github.michaelbull.result.fold
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.CancellationException
 
 class PerformSpellCheckUseCase(
     private val activeServiceManager: ActiveServiceManager,
@@ -55,8 +56,14 @@ class PerformSpellCheckUseCase(
         // which most spell checkers handle via language auto-detection.
         val request = SpellCheckRequest(text = text, language = currentState.sourceLanguage)
 
-        val result = withTimeoutOrNull(SPELL_CHECK_TIMEOUT_MS) {
+        val result = try { withTimeoutOrNull(SPELL_CHECK_TIMEOUT_MS) {
             spellChecker.check(request)
+        } } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            logger.error("Service threw an exception", e)
+            onStatusUpdate(StatusCode.SpellCheckFailed(e.message?.take(120) ?: "Service failed"), NotificationType.ERROR, true)
+            return emptyList()
         }
 
         if (result == null) {

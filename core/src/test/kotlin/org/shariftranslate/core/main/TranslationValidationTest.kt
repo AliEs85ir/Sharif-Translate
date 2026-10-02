@@ -135,4 +135,50 @@ class TranslationValidationTest {
             assertNull(fixture.manager.getActiveService<Translator>(ServiceType.DICTIONARY))
         } finally { fixture.scope.cancel() }
     }
+    @Test fun emptySuccessfulResponseIsRejectedAndCanRecover() = runBlocking {
+        var result = " "
+        val fixture = Fixture(FakeTranslator { Ok(TranslationResponse(result)) })
+        try {
+            assertNull(fixture.translate("hello"))
+            assertTrue(fixture.state.value.history.isEmpty())
+            assertFalse(fixture.state.value.isLoading)
+            result = "سلام"
+            assertEquals(result, fixture.translate("hello"))
+        } finally { fixture.scope.cancel() }
+    }
+
+    @Test fun explicitSourceWinsOverPreviouslyDetectedLanguage() = runBlocking {
+        val fixture = Fixture(FakeTranslator { Ok(TranslationResponse(it.targetLanguage.tag)) },
+            Configuration.DEFAULT.copy(translationRules = listOf(TranslationRule("en", "de"), TranslationRule("fa", "fr"))))
+        try {
+            fixture.state.update { it.copy(sourceLanguage = LanguageCode.FARSI, detectedSourceLanguage = LanguageCode.ENGLISH) }
+            assertEquals("fr", fixture.translate("سلام"))
+        } finally { fixture.scope.cancel() }
+    }
+
+    @Test fun failingExtraOutputPreservesSuccessfulTranslation() = runBlocking {
+        var calls = 0
+        val fixture = Fixture(FakeTranslator {
+            if (++calls == 2) error("backward service unavailable")
+            Ok(TranslationResponse("سلام", LanguageCode.ENGLISH))
+        }, Configuration.DEFAULT.copy(extraOutputType = ExtraOutputType.BackwardTranslate))
+        try {
+            assertEquals("سلام", fixture.translate("hello"))
+            assertFalse(fixture.state.value.isLoading)
+            assertEquals("سلام", fixture.state.value.history.last().translatedText)
+        } finally { fixture.scope.cancel() }
+    }
+
+    @Test fun disabledHistoryDoesNotPatchAnOlderEntry() = runBlocking {
+        val fixture = Fixture(FakeTranslator { Ok(TranslationResponse("result", LanguageCode.ENGLISH)) })
+        try {
+            fixture.translate("first")
+            val history = fixture.state.value.history
+            fixture.settings.value = fixture.settings.value.copy(isHistoryEnabled = false, extraOutputType = ExtraOutputType.BackwardTranslate)
+            fixture.translate("second")
+            assertEquals(history, fixture.state.value.history)
+            assertEquals(history, fixture.history.loadHistory())
+        } finally { fixture.scope.cancel() }
+    }
+
 }

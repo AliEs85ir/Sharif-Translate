@@ -231,13 +231,9 @@ class MainStore(
                 _state.update { it.copy(targetLanguage = intent.language, isLoading = false) }
             }
 
-            is MainIntent.ApplyCorrection ->
-                _state.update {
-                    it.copy(
-                        inputText = it.inputText.replaceFirst(intent.original, intent.suggestion),
-                        isQuickTranslateInputEdit = false
-                    )
-                }
+            is MainIntent.ApplyCorrection -> dispatch(MainIntent.UpdateInputText(
+                _state.value.inputText.replaceFirst(intent.original, intent.suggestion)
+            ))
 
             MainIntent.HideQuickTranslate -> {
                 val popupRequest = _state.value.isQuickTranslateInputEdit
@@ -525,8 +521,9 @@ class MainStore(
     }
 
     private suspend fun handleClearHistory() {
+        translateTextUseCase.cancel()
+        _state.update { it.copy(history = emptyList(), historyIndex = 0, isLoading = false) }
         historyRepository.clearHistory()
-        _state.update { it.copy(history = emptyList(), historyIndex = 0) }
     }
 
     private suspend fun handleReplaceWithTranslation(selectedText: String) {
@@ -553,7 +550,7 @@ class MainStore(
         val current = _state.value.targetLanguage
         val currentIdx = languages.indexOf(current)
         val nextIdx = (currentIdx + 1) % languages.size
-        _state.update { it.copy(targetLanguage = languages[nextIdx]) }
+        dispatch(MainIntent.SelectTargetLanguage(languages[nextIdx]))
     }
 
     suspend fun onShutdown() {

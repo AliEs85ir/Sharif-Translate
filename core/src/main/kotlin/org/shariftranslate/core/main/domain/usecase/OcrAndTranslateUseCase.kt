@@ -12,6 +12,7 @@ import org.shariftranslate.core.shared.arch.ServiceType
 import org.shariftranslate.core.shared.logging.LoggerFactory
 import com.github.michaelbull.result.fold
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.CancellationException
 
 class OcrAndTranslateUseCase(
     private val activeServiceManager: ActiveServiceManager,
@@ -48,8 +49,14 @@ class OcrAndTranslateUseCase(
         val request = OCRRequest(image, language = currentState.sourceLanguage)
         logger.debug("OCR request: language=${currentState.sourceLanguage}")
 
-        val result = withTimeoutOrNull(OCR_TIMEOUT_MS) {
+        val result = try { withTimeoutOrNull(OCR_TIMEOUT_MS) {
             ocrService.extractText(request)
+        } } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            logger.error("Service threw an exception", e)
+            onStatusUpdate(StatusCode.OcrFailed(e.message?.take(120) ?: "Service failed"), NotificationType.ERROR, true)
+            return ""
         }
 
         if (result == null) {

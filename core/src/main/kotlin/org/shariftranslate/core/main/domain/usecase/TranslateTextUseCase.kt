@@ -118,9 +118,7 @@ class TranslateTextUseCase(
                 // When source is explicitly set, we already know the language — apply
                 // the rule immediately without needing a first-pass translation.
                 val preResolvedTarget = if (!isAutoDetect) {
-                    val detectedOrSelected = currentState.detectedSourceLanguage
-                        ?: currentState.sourceLanguage
-                    resolveTargetFromRules(detectedOrSelected, rules)
+                    resolveTargetFromRules(currentState.sourceLanguage, rules)
                 } else null
 
                 val initialTarget = preResolvedTarget ?: currentState.targetLanguage
@@ -155,6 +153,7 @@ class TranslateTextUseCase(
 
                 result.fold(
                     success = { response ->
+                        require(response.translatedText.isNotBlank()) { "Translator returned empty text" }
                         logger.info("Translation successful: '${response.translatedText.take(50)}...'")
 
                         val detectedLanguage = response.detectedLanguage
@@ -286,6 +285,7 @@ class TranslateTextUseCase(
 
         retryResult.fold(
             success = { retryResponse ->
+                require(retryResponse.translatedText.isNotBlank()) { "Translator returned empty text" }
                 logger.info("Re-translation successful: '${retryResponse.translatedText.take(50)}...'")
                 onStatusUpdate(StatusCode.TranslationComplete, NotificationType.SUCCESS, true)
 
@@ -382,7 +382,7 @@ class TranslateTextUseCase(
         extraOutputText: String,
         extraOutputType: String
     ): List<HistorySnapshot> {
-        if (history.isEmpty() || (extraOutputText.isEmpty() && extraOutputType == "None")) return history
+        if (!settingsState.value.isHistoryEnabled || history.isEmpty() || (extraOutputText.isEmpty() && extraOutputType == "None")) return history
         val patched = history.last().copy(
             extraOutputText = extraOutputText,
             extraOutputType = extraOutputType
@@ -409,7 +409,7 @@ class TranslateTextUseCase(
             ExtraOutputSource.Output -> targetText
             ExtraOutputSource.Input  -> inputText
         }
-        return when (config.extraOutputType) {
+        return try { when (config.extraOutputType) {
             ExtraOutputType.BackwardTranslate -> performBackwardTranslation(
                 targetText     = targetText,
                 targetLanguage = sourceForBackward,
@@ -428,6 +428,12 @@ class TranslateTextUseCase(
                 onStatusUpdate = onStatusUpdate
             )
             ExtraOutputType.None -> ""
+        } } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            logger.error("Extra output failed", e)
+            onStatusUpdate(StatusCode.UnexpectedError(e.message?.take(120) ?: "Extra output failed"), NotificationType.WARNING, true)
+            ""
         }
     }
 
