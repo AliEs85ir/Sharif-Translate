@@ -1,6 +1,6 @@
 # Contributing Guide
 
-This page expands on [CONTRIBUTING.md](https://github.com/ahatem/qtranslate/blob/main/CONTRIBUTING.md) with more detail on specific workflows.
+This page expands on [CONTRIBUTING.md](../README.md) with more detail on specific workflows.
 
 ---
 
@@ -10,9 +10,9 @@ This page expands on [CONTRIBUTING.md](https://github.com/ahatem/qtranslate/blob
 
 ```bash
 # Fork on GitHub first, then:
-git clone https://github.com/YOUR_USERNAME/qtranslate.git
-cd qtranslate
-git remote add upstream https://github.com/ahatem/qtranslate.git
+git clone https://github.com/YOUR_USERNAME/shariftranslate.git
+cd shariftranslate
+git remote add upstream ../README.md
 ```
 
 ### 2. Keep your fork in sync
@@ -29,7 +29,7 @@ git push origin develop
 ### 3. Run the app locally
 
 ```bash
-./gradlew :app:run -DappData="C:/Users/you/QTranslateTestData"
+./gradlew :app:run -DappData="C:/Users/you/SharifTranslateTestData"
 ```
 
 Use a dedicated test data directory — separate from any real installation — so you can install test plugins and mess with settings freely.
@@ -115,7 +115,7 @@ Plugins importing `:core` is the most common mistake — if you find yourself ne
 
 ## Tests
 
-QTranslate does not have a test suite yet — this is one of the most impactful ways to contribute.
+SharifTranslate does not have a test suite yet — this is one of the most impactful ways to contribute.
 
 **How to contribute a test:**
 

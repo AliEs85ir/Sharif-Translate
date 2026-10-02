@@ -1,4 +1,4 @@
-# Contributing to QTranslate
+# Contributing to SharifTranslate
 
 Thank you for taking the time to contribute. This document covers everything you need to know to get started.
 
@@ -38,19 +38,14 @@ Be respectful. Disagreements about code are fine; personal attacks are not. We a
 ## Development Setup
 
 **Requirements**
-- Java 11 or later (we recommend [Temurin](https://adoptium.net))
-- Kotlin 1.9+
-- Gradle 8+ (the wrapper is included — use `./gradlew`)
+- JDK 17 for Gradle build logic and JDK 21 for compilation and packaging
+- Use the included Gradle wrapper and configured Kotlin version
 
 **Steps**
 
 ```bash
-# 1. Fork the repo on GitHub, then clone your fork
-git clone https://github.com/YOUR_USERNAME/qtranslate.git
-cd qtranslate
-
-# 2. Add the upstream remote so you can sync later
-git remote add upstream https://github.com/ahatem/qtranslate.git
+# Open your own Sharif Translate checkout.
+# No upstream repository remote is required.
 
 # 3. Build everything
 ./gradlew build
@@ -159,7 +154,7 @@ A maintainer will review within a few days. We may request changes — this is n
 
 ## Architecture Overview
 
-QTranslate follows Clean Architecture with MVI for the UI layer. The full architecture guide is in [wiki/Architecture.md](wiki/Architecture.md). The key rules:
+SharifTranslate follows Clean Architecture with MVI for the UI layer. The full architecture guide is in [wiki/Architecture.md](wiki/Architecture.md). The key rules:
 
 - **`:api`** — interfaces and data types only. No implementations. Plugins depend on this.
 - **`:core`** — business logic, use cases, stores, repositories. No Swing imports.
@@ -173,12 +168,12 @@ UI components must be "dumb" — they render state and dispatch intents, nothing
 
 ## Tests
 
-QTranslate does not have a test suite yet — this is a known gap and one of the best ways to contribute right now.
+Run the existing test suite with `./gradlew test`; add focused regression tests for behavior changes.
 
 If you want to help:
 
 - Pick a use case or repository class (e.g. `TranslateTextUseCase`, `PluginLoader`, `SettingsRepository`) and write unit tests for it
-- Open an issue titled `test: add tests for <class name>` so others know what you are working on — we will label it [`good first issue`](https://github.com/ahatem/qtranslate/labels/good%20first%20issue)
+- Open an issue titled `test: add tests for <class name>` so others know what you are working on — we will label it [`good first issue`](README.md)
 - We plan to use **JUnit 5** with **`kotlinx-coroutines-test`** for testing suspend functions
 
 If you are new to testing Kotlin coroutines, the [official testing guide](https://kotlinlang.org/docs/coroutines-testing.html) is a good starting point.

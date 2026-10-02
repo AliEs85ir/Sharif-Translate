@@ -3,7 +3,7 @@ name = "Persian"
 native_name = "فارسی"
 locale = "fa-IR"
 version = "1.0.0"
-author = "QTranslate Team"
+author = "Sharif Translate Team"
 last_updated = "2026-10-02"
 rtl = true
 
@@ -135,7 +135,7 @@ how_to_use = "روش استفاده"
 contact_us = "تماس با ما"
 auto_check_for_updates = "بررسی خودکار به‌روزرسانی‌ها"
 check_for_updates = "بررسی به‌روزرسانی‌ها"
-about_qtranslate = "دربارهٔ QTranslate"
+about_shariftranslate = "دربارهٔ Sharif Translate"
 exit = "خروج"
 
 [main_window_status_bar]
@@ -148,7 +148,7 @@ error_detail_copy = "رونوشت"
 error_detail_copied = "رونوشت شد!"
 
 [system_tray_menu]
-show_application = "نمایش QTranslate"
+show_application = "نمایش Sharif Translate"
 recognize_text = "شناسایی متن (OCR)"
 dictionary = "فرهنگ واژگان"
 history = "تاریخچه"
@@ -256,7 +256,7 @@ btn_uninstall = "حذف نصب"
 tip_accept_update = "نگه داشتن داده‌های فعلی و فعال کردن دوبارهٔ افزونه"
 tip_clean_install = "پاک کردن همهٔ داده‌های افزونه پیش از فعال‌سازی دوباره"
 install_dialog_title = "انتخاب فایل JAR افزونه"
-install_dialog_filter = "افزونهٔ QTranslate (*.jar)"
+install_dialog_filter = "افزونهٔ Sharif Translate (*.jar)"
 install_success_title = "افزونه نصب شد"
 install_success_msg = "افزونه با موفقیت نصب شد."
 install_fail_title = "نصب انجام نشد"
@@ -423,9 +423,9 @@ required_fields_error_msg = "لطفاً فیلدهای ضروری را پر کن
 
 [about_dialog]
 support_button = "حمایت از این پروژه ♥"
-donation_nudge = "شما ترجمه‌های زیادی با QTranslate انجام داده‌اید! اگر برنامه برایتان مفید است، از پروژه حمایت کنید (درباره ← حمایت ♥)"
-title = "دربارهٔ QTranslate"
-description = "QTranslate اصلی دیگر توسعه نمی‌یابد. این نسخه بازنویسی کامل همان ایده است و با افزونه‌ها به‌روز می‌ماند."
+donation_nudge = "شما ترجمه‌های زیادی با Sharif Translate انجام داده‌اید! اگر برنامه برایتان مفید است، از پروژه حمایت کنید (درباره ← حمایت ♥)"
+title = "دربارهٔ Sharif Translate"
+description = "Sharif Translate: desktop translation with configurable services."
 
 [history_dialog]
 title = "تاریخچهٔ ترجمه"
@@ -457,7 +457,7 @@ manage_presets = "مدیریت پیش‌تنظیم‌ها..."
 
 [update_dialog]
 title = "به‌روزرسانی موجود است"
-header = "نسخهٔ تازه‌ای از QTranslate موجود است!"
+header = "نسخهٔ تازه‌ای از Sharif Translate موجود است!"
 details_format = "نسخهٔ %s موجود است (نسخهٔ فعلی شما %s است). به‌روزرسانی شود؟"
 release_notes_label = "یادداشت‌های انتشار:"
 skip_button = "رد کردن این نسخه"
@@ -466,7 +466,7 @@ download_button = "دریافت"
 view_on_github_button = "نمایش در GitHub"
 
 [close_dialog]
-title = "بستن QTranslate"
+title = "بستن Sharif Translate"
 message = "چه کاری انجام شود؟"
 minimize_to_tray = "کوچک شدن در نوار سیستم"
 exit = "خروج"
@@ -483,6 +483,7 @@ tts_not_supported_format = "تبدیل متن به گفتار توسط %s پشت
 unknown_error = "خطای ناشناخته‌ای رخ داد."
 
 [status_bar]
+update_source_not_configured = "No update source configured for Sharif Translate."
 ocr_text_copied = "متن شناسایی و در کلیپ‌بورد رونوشت شد."
 translating = "در حال ترجمه..."
 translation_complete = "ترجمه کامل شد."

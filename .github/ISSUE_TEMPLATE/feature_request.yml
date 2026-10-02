@@ -6,7 +6,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Have an idea to make QTranslate better? Great! Please describe it below.
+        Have an idea to make SharifTranslate better? Great! Please describe it below.
 
   - type: dropdown
     id: category

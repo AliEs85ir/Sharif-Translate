@@ -6,7 +6,7 @@ name = "Russian"
 native_name = "Русский"
 locale = "ru-RU"
 version = "1.0.0"
-author = "QTranslate Team <ahatem925@gmail.com>"
+author = "Sharif Translate (adapted from original translations)"
 last_updated = "2026-04-26"
 rtl = false
 
@@ -108,7 +108,7 @@ how_to_use = "Как использовать"
 contact_us = "Связаться с нами"
 auto_check_for_updates = "Автопроверка обновлений"
 check_for_updates = "Проверить обновления"
-about_qtranslate = "О программе QTranslate"
+about_shariftranslate = "О программе Sharif Translate"
 exit = "Выход"
 
 [main_window_status_bar]
@@ -124,7 +124,7 @@ error_detail_copied = "Скопировано!"
 # SYSTEM TRAY MENU
 # ===================================================================
 [system_tray_menu]
-show_application = "Показать QTranslate"
+show_application = "Показать Sharif Translate"
 recognize_text = "Распознавание текста (OCR)"
 dictionary = "Словарь"
 history = "История"
@@ -242,7 +242,7 @@ tip_accept_update = "Сохранить данные и снова включи�
 tip_clean_install = "Стереть все данные плагина перед повторным включением"
 # Dialogs
 install_dialog_title = "Выберите JAR плагина"
-install_dialog_filter = "Плагин QTranslate (*.jar)"
+install_dialog_filter = "Плагин Sharif Translate (*.jar)"
 install_success_title = "Плагин установлен"
 install_success_msg = "Плагин успешно установлен."
 install_fail_title = "Ошибка установки"
@@ -426,9 +426,9 @@ required_fields_error_msg = "Пожалуйста, заполните обяза
 # ===================================================================
 [about_dialog]
 support_button = "Поддержать проект ♥"
-donation_nudge = "Вы много переводили с QTranslate! Если он вам полезен, подумайте о поддержке проекта (О программе → Поддержать ♥)"
-title = "О программе QTranslate"
-description = "Оригинальный QTranslate был заброшен. Это полная переработка — та же идея, но на основе плагинов, чтобы программа никогда не устаревала."
+donation_nudge = "Вы много переводили с Sharif Translate! Если он вам полезен, подумайте о поддержке проекта (О программе → Поддержать ♥)"
+title = "О программе Sharif Translate"
+description = "Sharif Translate: desktop translation with configurable services."
 
 
 [history_dialog]
@@ -461,7 +461,7 @@ manage_presets  = "Управление пресетами..."
 
 [update_dialog]
 title = "Доступно обновление"
-header = "Доступна новая версия QTranslate!"
+header = "Доступна новая версия Sharif Translate!"
 # %1$s = new version number, %2$s = current version number
 details_format = "Версия %s уже доступна (у вас установлена %s). Хотите обновить?"
 release_notes_label = "Список изменений:"
@@ -474,7 +474,7 @@ view_on_github_button = "Открыть на GitHub"
 # CLOSE DIALOG
 # ===================================================================
 [close_dialog]
-title           = "Закрыть QTranslate"
+title           = "Закрыть Sharif Translate"
 message         = "Что вы хотите сделать?"
 minimize_to_tray = "Свернуть в трей"
 exit            = "Выйти"
@@ -497,6 +497,7 @@ tts_not_supported_format = "Синтез речи (TTS) не поддержив�
 unknown_error = "Произошла неизвестная ошибка."
 
 [status_bar]
+update_source_not_configured = "No update source configured for Sharif Translate."
 ocr_text_copied = "Текст распознан и скопирован в буфер обмена."
 translating = "Перевод..."
 translation_complete = "Перевод выполнен."

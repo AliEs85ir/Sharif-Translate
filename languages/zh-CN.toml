@@ -6,7 +6,7 @@ name = "Chinese (Simplified)"
 native_name = "简体中文"
 locale = "zh-CN"
 version = "1.0.0"
-author = "QTranslate Team <ahatem925@gmail.com>"
+author = "Sharif Translate (adapted from original translations)"
 last_updated = "2026-04-26"
 rtl = false
 
@@ -108,7 +108,7 @@ how_to_use = "使用指南"
 contact_us = "联系我们"
 auto_check_for_updates = "自动检查更新"
 check_for_updates = "检查更新"
-about_qtranslate = "关于 QTranslate"
+about_shariftranslate = "关于 Sharif Translate"
 exit = "退出"
 
 [main_window_status_bar]
@@ -124,7 +124,7 @@ error_detail_copied = "已复制！"
 # SYSTEM TRAY MENU
 # ===================================================================
 [system_tray_menu]
-show_application = "显示 QTranslate"
+show_application = "显示 Sharif Translate"
 recognize_text = "文本识别 (OCR)"
 dictionary = "词典"
 history = "历史记录"
@@ -242,7 +242,7 @@ tip_accept_update = "保留现有数据并重新启用插件"
 tip_clean_install = "在重新启用前擦除所有插件数据"
 # Dialogs
 install_dialog_title = "选择插件 JAR 文件"
-install_dialog_filter = "QTranslate 插件 (*.jar)"
+install_dialog_filter = "Sharif Translate 插件 (*.jar)"
 install_success_title = "插件已安装"
 install_success_msg = "插件安装成功。"
 install_fail_title = "安装失败"
@@ -426,9 +426,9 @@ required_fields_error_msg = "请填写必填字段："
 # ===================================================================
 [about_dialog]
 support_button = "支持此项目 ♥"
-donation_nudge = "您已经使用 QTranslate 翻译了很多内容！如果您觉得它有用，请考虑支持该项目 (关于 → 支持 ♥)"
-title = "关于 QTranslate"
-description = "原版 QTranslate 已停止维护。这是一个完全重写的版本 —— 理念相同，且由插件驱动，确保应用永不过时。"
+donation_nudge = "您已经使用 Sharif Translate 翻译了很多内容！如果您觉得它有用，请考虑支持该项目 (关于 → 支持 ♥)"
+title = "关于 Sharif Translate"
+description = "Sharif Translate: desktop translation with configurable services."
 
 
 [history_dialog]
@@ -461,7 +461,7 @@ manage_presets  = "管理预设..."
 
 [update_dialog]
 title = "有可用更新"
-header = "QTranslate 的新版本已发布！"
+header = "Sharif Translate 的新版本已发布！"
 # %1$s = new version number, %2$s = current version number
 details_format = "版本 %s 现已发布 (当前版本为 %s)。是否要更新？"
 release_notes_label = "更新日志："
@@ -474,7 +474,7 @@ view_on_github_button = "在 GitHub 上查看"
 # CLOSE DIALOG
 # ===================================================================
 [close_dialog]
-title           = "关闭 QTranslate"
+title           = "关闭 Sharif Translate"
 message         = "您想执行什么操作？"
 minimize_to_tray = "最小化到系统托盘"
 exit            = "退出"
@@ -497,6 +497,7 @@ tts_not_supported_format = "%s 不支持语音合成 (TTS)。"
 unknown_error = "发生了未知错误。"
 
 [status_bar]
+update_source_not_configured = "No update source configured for Sharif Translate."
 ocr_text_copied = "文本已识别并复制到剪贴板。"
 translating = "正在翻译..."
 translation_complete = "翻译完成。"

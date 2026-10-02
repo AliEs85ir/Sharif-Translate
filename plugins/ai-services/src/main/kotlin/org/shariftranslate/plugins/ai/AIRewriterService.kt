@@ -1,0 +1,50 @@
+package org.shariftranslate.plugins.ai
+
+import org.shariftranslate.api.plugin.ServiceError
+import org.shariftranslate.api.plugin.SupportedLanguages
+import org.shariftranslate.api.rewriter.RewriteRequest
+import org.shariftranslate.api.rewriter.RewriteResponse
+import org.shariftranslate.api.rewriter.RewriteStyle
+import org.shariftranslate.api.rewriter.Rewriter
+import com.github.michaelbull.result.Result
+import com.github.michaelbull.result.map
+
+class AIRewriterService(
+    private val client: AIServiceClient
+) : Rewriter {
+
+    override val id: String = "ai-rewriter"
+    override val name: String = "AI Rewriter"
+    override val version: String = "1.0.0"
+    override val supportedLanguages: SupportedLanguages = SupportedLanguages.All
+
+    override suspend fun rewrite(request: RewriteRequest): Result<RewriteResponse, ServiceError> {
+        val styleInstruction = when (request.style) {
+            RewriteStyle.FORMAL -> "Rewrite in a formal, professional tone. Use precise vocabulary and complete sentences. Remove slang and colloquialisms."
+            RewriteStyle.CASUAL -> "Rewrite in a natural, conversational tone. Use everyday language as if speaking to a friend."
+            RewriteStyle.CONCISE -> "Rewrite as briefly as possible. Remove all filler words, redundancy, and unnecessary detail."
+            RewriteStyle.DETAILED -> "Rewrite in an expanded, thorough form. Add relevant context and elaborate on key points."
+            RewriteStyle.SIMPLIFIED -> "Rewrite using plain, simple language suitable for a general audience. Avoid jargon."
+        }
+
+        val system = """
+        You are a professional writing assistant.
+        
+        TASK:
+        $styleInstruction
+        
+        RULES:
+        1. Respond in the EXACT SAME LANGUAGE as the source text.
+        2. Output ONLY the rewritten text. 
+        3. Do NOT include any preamble, labels, or introductory phrases (e.g., do not say "Here is the formal version:").
+        4. Preserve original paragraph structure and line breaks.
+        
+        The text to rewrite begins after the '---' delimiter below.
+        ---
+    """.trimIndent()
+
+        return client.complete(system, request.text).map { rewritten ->
+            RewriteResponse(rewrittenText = rewritten.trim().removeSurrounding("\""))
+        }
+    }
+}

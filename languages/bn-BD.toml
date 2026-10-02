@@ -6,7 +6,7 @@ name = "Bengali"
 native_name = "বাংলা"
 locale = "bn-BD"
 version = "1.0.0"
-author = "QTranslate Team <ahatem925@gmail.com>"
+author = "Sharif Translate (adapted from original translations)"
 last_updated = "2026-04-26"
 rtl = false
 
@@ -108,7 +108,7 @@ how_to_use = "কিভাবে ব্যবহার করবেন"
 contact_us = "আমাদের সাথে যোগাযোগ করুন"
 auto_check_for_updates = "স্বয়ংক্রিয়ভাবে আপডেট চেক করুন"
 check_for_updates = "আপডেট চেক করুন"
-about_qtranslate = "QTranslate সম্পর্কে"
+about_shariftranslate = "Sharif Translate সম্পর্কে"
 exit = "প্রস্থান"
 
 [main_window_status_bar]
@@ -124,7 +124,7 @@ error_detail_copied = "কপি হয়েছে!"
 # SYSTEM TRAY MENU
 # ===================================================================
 [system_tray_menu]
-show_application = "QTranslate দেখান"
+show_application = "Sharif Translate দেখান"
 recognize_text = "লেখা শনাক্তকরণ (OCR)"
 dictionary = "অভিধান"
 history = "ইতিহাস"
@@ -242,7 +242,7 @@ tip_accept_update = "বিদ্যমান ডাটা রাখুন এ�
 tip_clean_install = "পুনরায় সক্রিয় করার আগে সমস্ত প্লাগইন ডাটা মুছে ফেলুন"
 # Dialogs
 install_dialog_title = "প্লাগইন JAR নির্বাচন করুন"
-install_dialog_filter = "QTranslate প্লাগইন (*.jar)"
+install_dialog_filter = "Sharif Translate প্লাগইন (*.jar)"
 install_success_title = "প্লাগইন ইনস্টল করা হয়েছে"
 install_success_msg = "প্লাগইন সফলভাবে ইনস্টল করা হয়েছে।"
 install_fail_title = "ইনস্টলেশন ব্যর্থ হয়েছে"
@@ -426,9 +426,9 @@ required_fields_error_msg = "অনুগ্রহ করে প্রয়ো�
 # ===================================================================
 [about_dialog]
 support_button = "এই প্রকল্পটি সমর্থন করুন ♥"
-donation_nudge = "আপনি QTranslate দিয়ে অনেক অনুবাদ করেছেন! যদি এটি উপকারী মনে করেন, তাহলে প্রকল্পটি সমর্থন করার কথা বিবেচনা করুন (About → Support ♥)"
-title = "QTranslate সম্পর্কে"
-description = "মূল QTranslate প্রকল্পটি পরিত্যক্ত হয়েছিল। এটি একটি সম্পূর্ণ নতুন সংস্করণ — একই ধারণা, তবে প্লাগইন-ভিত্তিক যাতে অ্যাপটি সর্বদা সচল থাকে।"
+donation_nudge = "আপনি Sharif Translate দিয়ে অনেক অনুবাদ করেছেন! যদি এটি উপকারী মনে করেন, তাহলে প্রকল্পটি সমর্থন করার কথা বিবেচনা করুন (About → Support ♥)"
+title = "Sharif Translate সম্পর্কে"
+description = "Sharif Translate: desktop translation with configurable services."
 
 
 
@@ -462,7 +462,7 @@ manage_presets = "প্রিসেট পরিচালনা করুন...
 
 [update_dialog]
 title = "আপডেট উপলব্ধ"
-header = "QTranslate-এর একটি নতুন ভার্সন উপলব্ধ!"
+header = "Sharif Translate-এর একটি নতুন ভার্সন উপলব্ধ!"
 # %1$s = new version number, %2$s = current version number
 details_format = "ভার্সন %s এখন উপলব্ধ (আপনার কাছে %s আছে)। আপনি কি আপডেট করতে চান?"
 release_notes_label = "রিলিজ নোটস:"
@@ -475,7 +475,7 @@ view_on_github_button = "GitHub-এ দেখুন"
 # CLOSE DIALOG
 # ===================================================================
 [close_dialog]
-title           = "QTranslate বন্ধ করুন"
+title           = "Sharif Translate বন্ধ করুন"
 message         = "আপনি কি করতে চান?"
 minimize_to_tray = "ট্রে-তে মিনিমাইজ করুন"
 exit            = "প্রস্থান করুন"
@@ -498,6 +498,7 @@ tts_not_supported_format = "টেক্সট-টু-স্পিচ %s দ্�
 unknown_error = "একটি অজানা ত্রুটি ঘটেছে।"
 
 [status_bar]
+update_source_not_configured = "No update source configured for Sharif Translate."
 ocr_text_copied = "পাঠ্য শনাক্ত করা হয়েছে এবং ক্লিপবোর্ডে কপি করা হয়েছে।"
 translating = "অনুবাদ হচ্ছে..."
 translation_complete = "অনুবাদ সম্পন্ন।"

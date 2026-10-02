@@ -6,7 +6,7 @@ name = "English"
 native_name = "English"
 locale = "en-US"
 version = "1.0.0"
-author = "QTranslate Team <ahatem925@gmail.com>"
+author = "Sharif Translate (adapted from original translations)"
 last_updated = "2026-04-26"
 rtl = false
 
@@ -142,7 +142,7 @@ how_to_use = "How to Use"
 contact_us = "Contact Us"
 auto_check_for_updates = "Auto-check for Updates"
 check_for_updates = "Check for Updates"
-about_qtranslate = "About QTranslate"
+about_shariftranslate = "About Sharif Translate"
 exit = "Exit"
 
 [main_window_status_bar]
@@ -158,7 +158,7 @@ error_detail_copied = "Copied!"
 # SYSTEM TRAY MENU
 # ===================================================================
 [system_tray_menu]
-show_application = "Show QTranslate"
+show_application = "Show Sharif Translate"
 recognize_text = "Recognize Text (OCR)"
 dictionary = "Dictionary"
 history = "History"
@@ -276,7 +276,7 @@ tip_accept_update = "Keep existing data and re-enable the plugin"
 tip_clean_install = "Wipe all plugin data before re-enabling"
 # Dialogs
 install_dialog_title = "Select Plugin JAR"
-install_dialog_filter = "QTranslate Plugin (*.jar)"
+install_dialog_filter = "Sharif Translate Plugin (*.jar)"
 install_success_title = "Plugin Installed"
 install_success_msg = "Plugin installed successfully."
 install_fail_title = "Installation Failed"
@@ -458,10 +458,10 @@ required_fields_error_msg = "Please fill in the required fields:"
 # OTHER DIALOGS
 # ===================================================================
 [about_dialog]
-title = "About QTranslate"
-description = "The original QTranslate was abandoned. This is a full rewrite — same idea, plugin-driven so the app never goes stale."
+title = "About Sharif Translate"
+description = "Sharif Translate: desktop translation with configurable services."
 support_button = "Support this project ♥"
-donation_nudge = "You've translated a lot with QTranslate! If you find it useful, consider supporting the project (About → Support ♥)"
+donation_nudge = "You've translated a lot with Sharif Translate! If you find it useful, consider supporting the project (About → Support ♥)"
 
 [history_dialog]
 title = "Translation History"
@@ -494,7 +494,7 @@ manage_presets  = "Manage Presets..."
 
 [update_dialog]
 title = "Update Available"
-header = "A new version of QTranslate is available!"
+header = "A new version of Sharif Translate is available!"
 # %1$s = new version number, %2$s = current version number
 details_format = "Version %s is now available (you have %s). Would you like to update?"
 release_notes_label = "Release Notes:"
@@ -507,7 +507,7 @@ view_on_github_button = "View on GitHub"
 # CLOSE DIALOG
 # ===================================================================
 [close_dialog]
-title           = "Close QTranslate"
+title           = "Close Sharif Translate"
 message         = "What would you like to do?"
 minimize_to_tray = "Minimize to Tray"
 exit            = "Exit"
@@ -533,6 +533,7 @@ unknown_error = "An unknown error occurred."
 # STATUS BAR MESSAGES
 # ===================================================================
 [status_bar]
+update_source_not_configured = "No update source configured for Sharif Translate."
 # Translation
 translating = "Translating..."
 translation_complete = "Translation complete."

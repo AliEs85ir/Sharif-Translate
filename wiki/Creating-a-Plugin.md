@@ -1,6 +1,6 @@
 # Creating a Plugin
 
-Plugins add translation engines, OCR, TTS, spell checkers, or dictionaries to QTranslate — without touching the app. You write a few classes, build a fat JAR, install it through the UI. That's the whole process.
+Plugins add translation engines, OCR, TTS, spell checkers, or dictionaries to SharifTranslate — without touching the app. You write a few classes, build a fat JAR, install it through the UI. That's the whole process.
 
 ---
 
@@ -48,7 +48,7 @@ my-plugin/
         ├── plugin.json
         ├── assets/icon.svg
         └── META-INF/services/
-            └── com.github.ahatem.qtranslate.api.plugin.Plugin
+            └── org.shariftranslate.api.plugin.Plugin
 ```
 
 ---
@@ -63,7 +63,7 @@ rootProject.name = "my-plugin"
 dependencyResolutionManagement {
     repositories {
         mavenCentral()
-        maven("https://jitpack.io")  // QTranslate API is published here
+        mavenLocal()  // Publish :api locally using :api:publishToMavenLocal
     }
 }
 ```
@@ -80,9 +80,9 @@ version = "1.0.0"
 
 dependencies {
     // compileOnly — available at compile time, NOT bundled in your JAR.
-    // QTranslate provides this at runtime. Never use "implementation" here —
+    // SharifTranslate provides this at runtime. Never use "implementation" here —
     // it causes classloader conflicts and bloats your JAR.
-    compileOnly("com.github.ahatem:qtranslate-api:1.0.0")
+    compileOnly("org.shariftranslate:shariftranslate-api:1.0.0")
 
     // Your own dependencies go as "implementation" — they ARE bundled
     implementation("io.ktor:ktor-client-core:2.3.7")
@@ -102,7 +102,7 @@ tasks.jar {
 }
 ```
 
-> **Which API version?** Use the API version, not the app release version — they are independent. Check [`ApiVersion.kt`](../api/src/main/kotlin/com/github/ahatem/qtranslate/api/core/ApiVersion.kt) for the current value. During development before any tagged release exists, you can use a full commit hash instead (e.g. `abc1234`).
+> **Which API version?** Use the API version, not the app release version — they are independent. Check [`ApiVersion.kt`](../api/src/main/kotlin/org/shariftranslate/api/core/ApiVersion.kt) for the current value. During development before any tagged release exists, you can use a full commit hash instead (e.g. `abc1234`).
 
 ---
 
@@ -115,7 +115,7 @@ Every plugin has exactly one `Plugin` class. It declares the plugin's identity a
 ```kotlin
 package com.example.myplugin
 
-import com.github.ahatem.qtranslate.api.plugin.*
+import org.shariftranslate.api.plugin.*
 
 class MyPlugin : Plugin<PluginSettings.None> {
     override val id          = "com.example.my-plugin"  // permanent — never change after publishing
@@ -142,8 +142,8 @@ class MyPlugin : Plugin<PluginSettings.None> {
 **With API key or settings:**
 
 ```kotlin
-import com.github.ahatem.qtranslate.api.plugin.PluginSettings
-import com.github.ahatem.qtranslate.api.settings.*
+import org.shariftranslate.api.plugin.PluginSettings
+import org.shariftranslate.api.settings.*
 
 @SettingGroups(
     SettingGroup(key = "auth",     title = "Authentication",  order = 10),
@@ -217,7 +217,7 @@ class MyPlugin : Plugin<MySettings> {
 }
 ```
 
-`@field:Setting` on a `var` property is enough — QTranslate builds the settings dialog automatically. No UI code needed.
+`@field:Setting` on a `var` property is enough — SharifTranslate builds the settings dialog automatically. No UI code needed.
 
 **Setting types** (`SettingType`):
 
@@ -234,7 +234,7 @@ class MyPlugin : Plugin<MySettings> {
 
 **Grouping** — add `@SettingGroups(...)` to the settings class and reference the group `key` in each `@field:Setting`. Groups with `collapsible = true` can be collapsed by the user.
 
-**Actions** — annotate a `suspend fun methodName(): String?` in your settings class with `@PluginAction`. QTranslate renders it as a button in the group's action strip. Return a non-null string to show a result message.
+**Actions** — annotate a `suspend fun methodName(): String?` in your settings class with `@PluginAction`. SharifTranslate renders it as a button in the group's action strip. Return a non-null string to show a result message.
 
 **Conditional visibility** — use `showIf = "propertyName=value"` to show a field only when another field has a specific value.
 
@@ -245,8 +245,8 @@ class MyPlugin : Plugin<MySettings> {
 ### Translator
 
 ```kotlin
-import com.github.ahatem.qtranslate.api.plugin.ServiceError
-import com.github.ahatem.qtranslate.api.translator.*
+import org.shariftranslate.api.plugin.ServiceError
+import org.shariftranslate.api.translator.*
 import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.Ok   // Ok(...) and Err(...) are top-level functions,
 import com.github.michaelbull.result.Err  // not types — import them like this
@@ -338,7 +338,7 @@ class MyTranslatorService(
 Create this file (the filename is the full interface name):
 
 ```
-src/main/resources/META-INF/services/com.github.ahatem.qtranslate.api.plugin.Plugin
+src/main/resources/META-INF/services/org.shariftranslate.api.plugin.Plugin
 ```
 
 Contents — just your Plugin class fully qualified:
@@ -347,7 +347,7 @@ Contents — just your Plugin class fully qualified:
 com.example.myplugin.MyPlugin
 ```
 
-This is how QTranslate finds your plugin. No reflection, no scanning, just this one file.
+This is how SharifTranslate finds your plugin. No reflection, no scanning, just this one file.
 
 ---
 
@@ -372,7 +372,7 @@ JAR is at `build/libs/my-plugin-1.0.0.jar`.
 ./gradlew jar && copy build\libs\my-plugin-1.0.0.jar "C:\path\to\appdata\plugins\"
 ```
 
-Then restart QTranslate. Much faster than reinstalling through the UI every time.
+Then restart SharifTranslate. Much faster than reinstalling through the UI every time.
 
 ---
 
@@ -400,7 +400,7 @@ Then restart QTranslate. Much faster than reinstalling through the UI every time
 Read the error in the plugin detail panel:
 - `No Plugin implementation found via ServiceLoader` → your `META-INF/services/` file is missing or has a typo in the class name
 - `plugin.json is missing or could not be parsed` → file not at `src/main/resources/plugin.json`, or invalid JSON
-- `API version incompatible` → your `minApiVersion` in `plugin.json` is newer than what the app supports, or the MAJOR version doesn't match. Check [`ApiVersion.kt`](../api/src/main/kotlin/com/github/ahatem/qtranslate/api/core/ApiVersion.kt) for the current API version and set `minApiVersion` to match
+- `API version incompatible` → your `minApiVersion` in `plugin.json` is newer than what the app supports, or the MAJOR version doesn't match. Check [`ApiVersion.kt`](../api/src/main/kotlin/org/shariftranslate/api/core/ApiVersion.kt) for the current API version and set `minApiVersion` to match
 
 **Services don't appear in Settings → Services & Presets**
 
@@ -442,21 +442,21 @@ import com.github.michaelbull.result.Result  // for the return type
 
 ## Publishing on GitHub
 
-Once your plugin works, publishing it on GitHub makes it discoverable in QTranslate's built-in marketplace.
+Once your plugin works, publishing it on GitHub makes it discoverable in SharifTranslate's built-in marketplace.
 
 ### Step 1 — Create a public GitHub repository
 
-Any name works, but `qtranslate-{plugin-id}` is the convention:
+Any name works, but `shariftranslate-{plugin-id}` is the convention:
 
 ```
-github.com/your-username/qtranslate-my-plugin
+github.com/your-username/shariftranslate-my-plugin
 ```
 
-### Step 2 — Add the `qtranslate-plugin` topic
+### Step 2 — Add the `shariftranslate-plugin` topic
 
-In your repo's **Settings → Topics**, add `qtranslate-plugin`. This is what the QTranslate marketplace uses to discover plugins — without this tag, your plugin won't appear.
+In your repo's **Settings → Topics**, add `shariftranslate-plugin`. This is what the SharifTranslate marketplace uses to discover plugins — without this tag, your plugin won't appear.
 
-### Step 3 — Add `qtranslate-plugin.json` to your repo root
+### Step 3 — Add `shariftranslate-plugin.json` to your repo root
 
 This file provides the metadata shown in the marketplace:
 
@@ -536,16 +536,16 @@ jobs:
           files: ${{ steps.sha256.outputs.jar }}
 ```
 
-> **Tip:** After each release, copy the computed `sha256` value into `qtranslate-plugin.json` and commit it so the marketplace can verify the download.
+> **Tip:** After each release, copy the computed `sha256` value into `shariftranslate-plugin.json` and commit it so the marketplace can verify the download.
 
 ### Step 5 — Add README badges (optional)
 
 ```markdown
-[![Latest Release](https://img.shields.io/github/v/release/your-username/qtranslate-my-plugin?style=flat-square)](https://github.com/your-username/qtranslate-my-plugin/releases/latest)
-[![QTranslate Plugin](https://img.shields.io/badge/QTranslate-plugin-4A90D9?style=flat-square)](https://github.com/ahatem/qtranslate)
-[![License](https://img.shields.io/github/license/your-username/qtranslate-my-plugin?style=flat-square)](LICENSE)
+[![Latest Release](https://img.shields.io/github/v/release/your-username/shariftranslate-my-plugin?style=flat-square)](https://github.com/your-username/shariftranslate-my-plugin/releases/latest)
+[![SharifTranslate Plugin](https://img.shields.io/badge/SharifTranslate-plugin-4A90D9?style=flat-square)](../README.md)
+[![License](https://img.shields.io/github/license/your-username/shariftranslate-my-plugin?style=flat-square)](LICENSE)
 ```
 
 ---
 
-Your plugin will appear in QTranslate's marketplace automatically once it has the `qtranslate-plugin` topic. Users can browse, install, and update it without leaving the app.
+Your plugin will appear in SharifTranslate's marketplace automatically once it has the `shariftranslate-plugin` topic. Users can browse, install, and update it without leaving the app.

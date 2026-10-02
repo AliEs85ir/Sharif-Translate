@@ -6,7 +6,7 @@ name = "French"
 native_name = "Français"
 locale = "fr-FR"
 version = "1.0.0"
-author = "QTranslate Team <ahatem925@gmail.com>"
+author = "Sharif Translate (adapted from original translations)"
 last_updated = "2026-04-26"
 rtl = false
 
@@ -108,7 +108,7 @@ how_to_use = "Comment utiliser"
 contact_us = "Contactez-nous"
 auto_check_for_updates = "Mise à jour automatique"
 check_for_updates = "Vérifier les mises à jour"
-about_qtranslate = "À propos de QTranslate"
+about_shariftranslate = "À propos de Sharif Translate"
 exit = "Quitter"
 
 [main_window_status_bar]
@@ -124,7 +124,7 @@ error_detail_copied = "Copié !"
 # SYSTEM TRAY MENU
 # ===================================================================
 [system_tray_menu]
-show_application = "Afficher QTranslate"
+show_application = "Afficher Sharif Translate"
 recognize_text = "Reconnaissance de texte (OCR)"
 dictionary = "Dictionnaire"
 history = "Historique"
@@ -242,7 +242,7 @@ tip_accept_update = "Conserver les données existantes et réactiver le plugin"
 tip_clean_install = "Effacer toutes les données du plugin avant de le réactiver"
 # Dialogs
 install_dialog_title = "Sélectionner le fichier JAR du plugin"
-install_dialog_filter = "Plugin QTranslate (*.jar)"
+install_dialog_filter = "Plugin Sharif Translate (*.jar)"
 install_success_title = "Plugin installé"
 install_success_msg = "Le plugin a été installé avec succès."
 install_fail_title = "Échec de l'installation"
@@ -426,9 +426,9 @@ required_fields_error_msg = "Veuillez remplir les champs obligatoires :"
 # ===================================================================
 [about_dialog]
 support_button = "Soutenez ce projet ♥"
-donation_nudge = "Vous avez beaucoup traduit avec QTranslate ! Si vous le trouvez utile, envisagez de soutenir le projet (À propos → Soutenir ♥)"
-title = "À propos de QTranslate"
-description = "Le QTranslate original a été abandonné. Voici une réécriture complète — même concept, basée sur des plugins pour que l'application soit toujours à jour."
+donation_nudge = "Vous avez beaucoup traduit avec Sharif Translate ! Si vous le trouvez utile, envisagez de soutenir le projet (À propos → Soutenir ♥)"
+title = "À propos de Sharif Translate"
+description = "Sharif Translate: desktop translation with configurable services."
 
 [history_dialog]
 title = "Historique des traductions"
@@ -460,7 +460,7 @@ manage_presets  = "Gérer les préréglages..."
 
 [update_dialog]
 title = "Mise à jour disponible"
-header = "Une nouvelle version de QTranslate est disponible !"
+header = "Une nouvelle version de Sharif Translate est disponible !"
 # %1$s = new version number, %2$s = current version number
 details_format = "La version %s est disponible (vous avez la %s). Voulez-vous mettre à jour ?"
 release_notes_label = "Notes de version :"
@@ -473,7 +473,7 @@ view_on_github_button = "Voir sur GitHub"
 # CLOSE DIALOG
 # ===================================================================
 [close_dialog]
-title           = "Fermer QTranslate"
+title           = "Fermer Sharif Translate"
 message         = "Que souhaitez-vous faire ?"
 minimize_to_tray = "Réduire dans la zone de notification"
 exit            = "Quitter"
@@ -496,6 +496,7 @@ tts_not_supported_format = "La synthèse vocale n'est pas prise en charge par %s
 unknown_error = "Une erreur inconnue est survenue."
 
 [status_bar]
+update_source_not_configured = "No update source configured for Sharif Translate."
 ocr_text_copied = "Texte reconnu et copié dans le presse-papier."
 translating = "Traduction en cours..."
 translation_complete = "Traduction terminée."

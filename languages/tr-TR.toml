@@ -6,7 +6,7 @@ name = "Turkish"
 native_name = "Türkçe"
 locale = "tr-TR"
 version = "1.0.0"
-author = "QTranslate Team <ahatem925@gmail.com>"
+author = "Sharif Translate (adapted from original translations)"
 last_updated = "2026-04-26"
 rtl = false
 
@@ -108,7 +108,7 @@ how_to_use = "Nasıl Kullanılır"
 contact_us = "Bize Ulaşın"
 auto_check_for_updates = "Güncellemeleri Otomatik Denetle"
 check_for_updates = "Güncellemeleri Denetle"
-about_qtranslate = "QTranslate Hakkında"
+about_shariftranslate = "Sharif Translate Hakkında"
 exit = "Çıkış"
 
 [main_window_status_bar]
@@ -124,7 +124,7 @@ error_detail_copied = "Kopyalandı!"
 # SYSTEM TRAY MENU
 # ===================================================================
 [system_tray_menu]
-show_application = "QTranslate'i Göster"
+show_application = "Sharif Translate'i Göster"
 recognize_text = "Metin Tanıma (OCR)"
 dictionary = "Sözlük"
 history = "Geçmiş"
@@ -242,7 +242,7 @@ tip_accept_update = "Mevcut verileri koru ve eklentiyi yeniden etkinleştir"
 tip_clean_install = "Yeniden etkinleştirmeden önce tüm eklenti verilerini sil"
 # Dialogs
 install_dialog_title = "Eklenti JAR Dosyasını Seçin"
-install_dialog_filter = "QTranslate Eklentisi (*.jar)"
+install_dialog_filter = "Sharif Translate Eklentisi (*.jar)"
 install_success_title = "Eklenti Kuruldu"
 install_success_msg = "Eklenti başarıyla kuruldu."
 install_fail_title = "Kurulum Başarısız"
@@ -426,9 +426,9 @@ required_fields_error_msg = "Lütfen gerekli alanları doldurun:"
 # ===================================================================
 [about_dialog]
 support_button = "Bu projeyi destekleyin ♥"
-donation_nudge = "QTranslate ile çok fazla çeviri yaptınız! Yararlı buluyorsanız, projeyi desteklemeyi düşünün (Hakkında → Destekle ♥)"
-title = "QTranslate Hakkında"
-description = "Orijinal QTranslate projesi durduruldu. Bu, eklenti tabanlı yapısıyla uygulamanın asla eskimeyeceği tam bir yeniden yazımdır."
+donation_nudge = "Sharif Translate ile çok fazla çeviri yaptınız! Yararlı buluyorsanız, projeyi desteklemeyi düşünün (Hakkında → Destekle ♥)"
+title = "Sharif Translate Hakkında"
+description = "Sharif Translate: desktop translation with configurable services."
 
 
 [history_dialog]
@@ -461,7 +461,7 @@ manage_presets  = "Önayarları Yönet..."
 
 [update_dialog]
 title = "Güncelleme Mevcut"
-header = "QTranslate'in yeni bir sürümü mevcut!"
+header = "Sharif Translate'in yeni bir sürümü mevcut!"
 # %1$s = new version number, %2$s = current version number
 details_format = "Sürüm %s şu an indirilebilir (sizdeki sürüm: %s). Güncellemek ister misiniz?"
 release_notes_label = "Sürüm Notları:"
@@ -474,7 +474,7 @@ view_on_github_button = "GitHub'da Görüntüle"
 # CLOSE DIALOG
 # ===================================================================
 [close_dialog]
-title           = "QTranslate'i Kapat"
+title           = "Sharif Translate'i Kapat"
 message         = "Ne yapmak istersiniz?"
 minimize_to_tray = "Sistem Tepsisine Küçült"
 exit            = "Çıkış"
@@ -497,6 +497,7 @@ tts_not_supported_format = "Metinden sese özelliği %s tarafından desteklenmiy
 unknown_error = "Bilinmeyen bir hata oluştu."
 
 [status_bar]
+update_source_not_configured = "No update source configured for Sharif Translate."
 ocr_text_copied = "Metin tanındı ve panoya kopyalandı."
 translating = "Çevriliyor..."
 translation_complete = "Çeviri tamamlandı."

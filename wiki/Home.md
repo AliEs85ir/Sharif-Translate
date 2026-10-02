@@ -1,25 +1,25 @@
-# QTranslate Wiki
+# SharifTranslate Wiki
 
-Welcome to the QTranslate documentation wiki.
+Welcome to the SharifTranslate documentation wiki.
 
 ---
 
 ## For Users
 
 - [Installing Plugins](Installing-Plugins.md) — how to find, install, and configure plugins
-- [Adding a Language](Adding-a-Language.md) — translate the QTranslate interface into your language
+- [Adding a Language](Adding-a-Language.md) — translate the SharifTranslate interface into your language
 - [Adding a Theme](Adding-a-Theme.md) — install community themes or create your own
 
 ## For Developers
 
-- [Building from Source](Building-from-Source.md) — compile and run QTranslate locally
-- [Architecture](Architecture.md) — how QTranslate is structured and why
+- [Building from Source](Building-from-Source.md) — compile and run SharifTranslate locally
+- [Architecture](Architecture.md) — how SharifTranslate is structured and why
 - [Creating a Plugin](Creating-a-Plugin.md) — build your own translation engine, OCR, or TTS plugin
 - [Contributing](Contributing.md) — how to contribute code, docs, or translations
 
 ### Plugin Marketplace _(coming soon)_
 
-QTranslate has a built-in marketplace that discovers community plugins from GitHub. Plugin authors opt in by adding the `qtranslate-plugin` topic to their repo and placing a `qtranslate-plugin.json` file at the repo root.
+SharifTranslate has a built-in marketplace that discovers community plugins from GitHub. Plugin authors opt in by adding the `shariftranslate-plugin` topic to their repo and placing a `shariftranslate-plugin.json` file at the repo root.
 
 → [Plugin publishing guide](Creating-a-Plugin.md#publishing-on-github)
 
@@ -36,4 +36,4 @@ The bundled plugins are the best reference for plugin development:
 
 ---
 
-Can't find what you're looking for? [Open an issue](https://github.com/ahatem/qtranslate/issues/new) and ask.
+Can't find what you're looking for? [Open an issue](../README.md) and ask.

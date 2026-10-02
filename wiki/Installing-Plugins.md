@@ -1,13 +1,13 @@
 # Installing Plugins
 
-Plugins extend QTranslate with new translation engines, OCR providers, TTS services, and more. They are standard JAR files that you install through the Settings panel.
+Plugins extend SharifTranslate with new translation engines, OCR providers, TTS services, and more. They are standard JAR files that you install through the Settings panel.
 
 ---
 
 ## Installing a plugin
 
 1. Download the plugin `.jar` file from its repository or release page
-2. In QTranslate, open **Settings → Plugins**
+2. In SharifTranslate, open **Settings → Plugins**
 3. Click **Install Plugin…**
 4. Select the `.jar` file
 5. The plugin appears in the list — enable it with the **Enable** button
@@ -26,7 +26,7 @@ Most plugins that connect to external APIs require at least an API key.
 4. Fill in the required fields (marked with a red `*`)
 5. Click **Save**
 
-The configuration is stored securely in your QTranslate data folder. It is never sent anywhere except to the API the plugin connects to.
+The configuration is stored securely in your SharifTranslate data folder. It is never sent anywhere except to the API the plugin connects to.
 
 ---
 
@@ -53,7 +53,7 @@ This removes the JAR and all stored plugin data (configuration, keys, cache). It
 
 ## Plugin verification
 
-When QTranslate detects that a plugin JAR has changed since the last run (different file hash), it pauses the plugin in **Awaiting Verification** state. This protects you from accidentally running a modified or replaced JAR.
+When SharifTranslate detects that a plugin JAR has changed since the last run (different file hash), it pauses the plugin in **Awaiting Verification** state. This protects you from accidentally running a modified or replaced JAR.
 
 You will see two options:
 
@@ -76,5 +76,5 @@ Go to **Settings → Services & Presets** and check the dropdowns — the servic
 
 ## Safety note
 
-QTranslate loads third-party plugin JARs at runtime. Install only plugins from sources you trust. A malicious plugin has full access to the JVM and can read your API keys from the settings store.
+SharifTranslate loads third-party plugin JARs at runtime. Install only plugins from sources you trust. A malicious plugin has full access to the JVM and can read your API keys from the settings store.
 We review plugins before listing them in the README, but we cannot guarantee the safety of every third-party plugin.

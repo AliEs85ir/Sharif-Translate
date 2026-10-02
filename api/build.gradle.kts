@@ -14,8 +14,8 @@ publishing {
     publications {
         create<MavenPublication>("release") {
             from(components["java"])
-            groupId    = "com.github.ahatem"
-            artifactId = "qtranslate-api"
+            groupId    = "org.shariftranslate"
+            artifactId = "shariftranslate-api"
             version    = project.version.toString()
         }
     }

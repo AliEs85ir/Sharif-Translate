@@ -1,26 +1,26 @@
 name: Plugin submission
-description: Submit your plugin to be listed in the QTranslate community plugins table
+description: Submit your plugin to be listed in the SharifTranslate community plugins table
 title: "[Plugin] "
 labels: [plugin-submission]
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for building a QTranslate plugin! Fill in the details below and we'll add it to the community plugins table.
+        Thanks for building a SharifTranslate plugin! Fill in the details below and we'll add it to the community plugins table.
 
         **Before submitting**, make sure your repo has:
-        - The `qtranslate-plugin` GitHub topic set (repo Settings → Topics)
-        - A `qtranslate-plugin.json` file at the repo root
+        - The `shariftranslate-plugin` GitHub topic set (repo Settings → Topics)
+        - A `shariftranslate-plugin.json` file at the repo root
         - A downloadable JAR attached to a GitHub Release
 
-        → [Plugin publishing guide](https://github.com/ahatem/qtranslate/wiki/Creating-a-Plugin#publishing-on-github)
+        → [Plugin publishing guide](README.md)
 
   - type: input
     id: repo_url
     attributes:
       label: Repository URL
       description: The full GitHub URL of your plugin repository.
-      placeholder: "https://github.com/your-username/qtranslate-my-plugin"
+      placeholder: "https://github.com/your-username/shariftranslate-my-plugin"
     validations:
       required: true
 
@@ -56,10 +56,10 @@ body:
       required: true
 
   - type: input
-    id: qtranslate_version
+    id: shariftranslate_version
     attributes:
-      label: Minimum QTranslate version
-      description: The oldest QTranslate version your plugin works with.
+      label: Minimum SharifTranslate version
+      description: The oldest SharifTranslate version your plugin works with.
       placeholder: "e.g. 1.2.0"
     validations:
       required: true
@@ -69,13 +69,13 @@ body:
     attributes:
       label: Checklist
       options:
-        - label: The repo has the `qtranslate-plugin` GitHub topic
+        - label: The repo has the `shariftranslate-plugin` GitHub topic
           required: true
-        - label: A `qtranslate-plugin.json` file is at the repo root
+        - label: A `shariftranslate-plugin.json` file is at the repo root
           required: true
         - label: A downloadable `.jar` is attached to a GitHub Release
           required: true
-        - label: The plugin works with the current QTranslate release
+        - label: The plugin works with the current SharifTranslate release
           required: true
         - label: The repository has a README with setup instructions
           required: true
@@ -85,4 +85,4 @@ body:
   - type: markdown
     attributes:
       value: |
-        By submitting this issue you agree the plugin may be listed publicly in the QTranslate community table, and removed at the maintainer's discretion if it becomes unmaintained or violates these guidelines.
+        By submitting this issue you agree the plugin may be listed publicly in the SharifTranslate community table, and removed at the maintainer's discretion if it becomes unmaintained or violates these guidelines.

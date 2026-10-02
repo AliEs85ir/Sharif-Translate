@@ -6,7 +6,7 @@ name = "Hungarian"
 native_name = "Magyar"
 locale = "hu-HU"
 version = "1.0.0"
-author = "QTranslate Team <ahatem925@gmail.com>"
+author = "Sharif Translate (adapted from original translations)"
 last_updated = "2026-04-26"
 rtl = false
 
@@ -108,7 +108,7 @@ how_to_use = "Hogyan kell használni"
 contact_us = "Lépjen kapcsolatba velünk"
 auto_check_for_updates = "Frissítések automatikus ellenőrzése"
 check_for_updates = "Frissítések keresése"
-about_qtranslate = "QTranslate névjegye"
+about_shariftranslate = "Sharif Translate névjegye"
 exit = "Kilépés"
 
 [main_window_status_bar]
@@ -124,7 +124,7 @@ error_detail_copied = "Másolva!"
 # SYSTEM TRAY MENU
 # ===================================================================
 [system_tray_menu]
-show_application = "Mutassa a QTranslate-et"
+show_application = "Mutassa a Sharif Translate-et"
 recognize_text = "Szöveg felismerése (OCR)"
 dictionary = "Szótár"
 history = "Előzmények"
@@ -242,7 +242,7 @@ tip_accept_update = "Tartsa meg a meglévő adatokat, és engedélyezze újra a 
 tip_clean_install = "Az újbóli engedélyezés előtt törölje az összes bővítmény modul adatát"
 # Dialogs
 install_dialog_title = "Válassza ki a bővítmény JAR-fájlját"
-install_dialog_filter = "QTranslate bővítmény (*.jar)"
+install_dialog_filter = "Sharif Translate bővítmény (*.jar)"
 install_success_title = "Bővítmény telepítve"
 install_success_msg = "A bővítmény sikeresen telepítve."
 install_fail_title = "Telepítés sikertelen"
@@ -426,9 +426,9 @@ required_fields_error_msg = "Kérjük, töltse ki a szükséges mezőket:"
 # ===================================================================
 [about_dialog]
 support_button = "Támogasd ezt a projektet ♥"
-donation_nudge = "Sokat fordítottál a QTranslate-dzsel! Ha hasznosnak találod, fontold meg a projekt támogatását (Névjegy → Támogatás ♥)"
-title = "QTranslate névjegye"
-description = "Az eredeti QTranslate-et már nem fejlesztik tovább. Ez egy teljesen újratervezett változat — ugyanaz az alapelv, de bővítményalapú, így az alkalmazás mindig naprakész marad."
+donation_nudge = "Sokat fordítottál a Sharif Translate-dzsel! Ha hasznosnak találod, fontold meg a projekt támogatását (Névjegy → Támogatás ♥)"
+title = "Sharif Translate névjegye"
+description = "Sharif Translate: desktop translation with configurable services."
 
 [history_dialog]
 title = "Fordítási előzmények"
@@ -460,7 +460,7 @@ manage_presets  = "Előbeállítások kezelése..."
 
 [update_dialog]
 title = "Frissítés elérhető"
-header = "Elérhető a QTranslate új verziója!"
+header = "Elérhető a Sharif Translate új verziója!"
 # %1$s = új verziószám, %2$s = aktuális verziószám
 details_format = "A(z) %s verzió most elérhető (jelenleg %s van). Szeretné frissíteni?"
 release_notes_label = "Kiadási megjegyzések:"
@@ -473,7 +473,7 @@ view_on_github_button = "Megtekintés GitHub-on"
 # CLOSE DIALOG
 # ===================================================================
 [close_dialog]
-title           = "QTranslate bezárása"
+title           = "Sharif Translate bezárása"
 message         = "Mit szeretne tenni?"
 minimize_to_tray = "Minimalizálás a tálcára"
 exit            = "Kilépés"
@@ -496,6 +496,7 @@ tts_not_supported_format = "A(z) %s nem támogatja a szövegfelolvasást."
 unknown_error = "Ismeretlen hiba történt."
 
 [status_bar]
+update_source_not_configured = "No update source configured for Sharif Translate."
 ocr_text_copied = "Felismert szöveg a vágólapra másolva."
 translating = "Fordítás folyamatban..."
 translation_complete = "A fordítás kész."

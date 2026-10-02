@@ -1,0 +1,263 @@
+package org.shariftranslate.ui.swing.settings.panels
+
+import com.formdev.flatlaf.extras.FlatSVGIcon
+import org.shariftranslate.api.plugin.Service
+import org.shariftranslate.core.localization.LocalizationManager
+import org.shariftranslate.core.plugin.PluginManager
+import org.shariftranslate.core.settings.data.ServicePreset
+import org.shariftranslate.core.settings.mvi.SettingsIntent
+import org.shariftranslate.core.settings.mvi.SettingsState
+import org.shariftranslate.core.settings.mvi.SettingsStore
+import org.shariftranslate.core.shared.arch.ServiceType
+import org.shariftranslate.core.shared.util.type
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import java.awt.*
+import javax.swing.*
+
+class ServicesPanel(
+    private val store: SettingsStore,
+    private val pluginManager: PluginManager,
+    private val localizationManager: LocalizationManager,
+    private val scope: CoroutineScope
+) : SettingsPanel() {
+
+    private lateinit var presetCombo: JComboBox<PresetInfo>
+    private lateinit var renameBtn: JButton
+    private lateinit var deleteBtn: JButton
+    private val serviceComboBoxes = mutableMapOf<ServiceType, JComboBox<ServiceOption>>()
+
+    init {
+        buildUI()
+        observePlugins()
+    }
+
+    private fun buildUI() {
+
+        // ── Preset management ─────────────────────────────────────────────────
+        addSeparator(localizationManager.getString("settings_services.presets_group"))
+
+        presetCombo = JComboBox<PresetInfo>().apply {
+            setRenderer { _, value, _, _, _ -> JLabel(value?.name ?: "") }
+            addActionListener {
+                if (!isUpdatingFromState) {
+                    (selectedItem as? PresetInfo)?.let {
+                        store.dispatch(SettingsIntent.SetActivePreset(it.id))
+                    }
+                }
+            }
+        }
+        addRow(localizationManager.getString("settings_services.current_preset"), presetCombo)
+
+        val newBtn = JButton(localizationManager.getString("settings_services.new_preset_btn"))
+            .apply { addActionListener { onNew() } }
+        renameBtn = JButton(localizationManager.getString("settings_services.rename_preset_btn"))
+            .apply { addActionListener { onRename() } }
+        deleteBtn = JButton(localizationManager.getString("settings_services.delete_preset_btn"))
+            .apply { addActionListener { onDelete() } }
+
+        gb.nextRow().spanLine().weightX(1.0).fill(GridBagConstraints.HORIZONTAL)
+            .anchor(GridBagConstraints.LINE_START).insets(4, 0, 0, 0)
+            .add(JPanel(FlowLayout(FlowLayout.LEADING, 4, 0)).apply {
+                isOpaque = false
+                add(newBtn); add(renameBtn); add(deleteBtn)
+            })
+
+        addHint(localizationManager.getString("settings_services.preset_hint"))
+
+        // ── Service configuration — 2-column card grid ────────────────────────
+        addSeparator(localizationManager.getString("settings_services.config_group"))
+
+        gb.nextRow().spanLine().weightX(1.0).fill(GridBagConstraints.HORIZONTAL)
+            .insets(4, 0, 0, 0)
+            .add(buildServiceGrid())
+
+        finishLayout()
+    }
+
+    // ── 2-column service grid ─────────────────────────────────────────────────
+
+    private fun buildServiceGrid(): JPanel {
+        val grid = JPanel(GridLayout(0, 2, 12, 10)).apply { isOpaque = false }
+        ServiceType.entries.forEach { type ->
+            val combo = buildServiceCombo(type)
+            serviceComboBoxes[type] = combo
+            grid.add(buildServiceCard(type, combo))
+        }
+        return grid
+    }
+
+    private fun buildServiceCard(type: ServiceType, combo: JComboBox<ServiceOption>): JPanel {
+        val icon = serviceIcon(type)
+        val label = serviceLabel(type)
+
+        val header = JPanel(FlowLayout(FlowLayout.LEADING, 5, 0)).apply {
+            isOpaque = false
+            if (icon != null) add(JLabel(icon))
+            add(JLabel(label).apply {
+                foreground = UIManager.getColor("Label.disabledForeground")
+                font = font.deriveFont(font.size - 1f)
+            })
+        }
+
+        return JPanel(BorderLayout(0, 5)).apply {
+            isOpaque = false
+            add(header, BorderLayout.NORTH)
+            add(combo, BorderLayout.CENTER)
+        }
+    }
+
+    private fun buildServiceCombo(type: ServiceType): JComboBox<ServiceOption> =
+        JComboBox<ServiceOption>().apply {
+            setRenderer { _, value, _, _, _ ->
+                JLabel(value?.name ?: localizationManager.getString("common.none"))
+            }
+            addActionListener {
+                if (!isUpdatingFromState) {
+                    store.dispatch(
+                        SettingsIntent.UpdateServiceInActivePreset(type, (selectedItem as? ServiceOption)?.id)
+                    )
+                }
+            }
+        }
+
+    /**
+     * Loads a theme-aware 14×14 icon for [type] using [FlatSVGIcon] with a [FlatSVGIcon.ColorFilter]
+     * that remaps all SVG colors to `Label.disabledForeground` at paint time.
+     */
+    private fun serviceIcon(type: ServiceType): Icon? {
+        val path = when (type) {
+            ServiceType.TRANSLATOR -> "icons/lucide/languages.svg"
+            ServiceType.TTS -> "icons/lucide/volume.svg"
+            ServiceType.OCR -> "icons/lucide/scan-text.svg"
+            ServiceType.SPELL_CHECKER -> "icons/lucide/check.svg"
+            ServiceType.DICTIONARY -> "icons/lucide/book-open.svg"
+            ServiceType.SUMMARIZER -> "icons/lucide/text-align-start.svg"
+            ServiceType.REWRITER -> "icons/lucide/pen-line.svg"
+        }
+        return runCatching {
+            val icon = FlatSVGIcon(path, 14, 14, javaClass.classLoader)
+            icon.colorFilter = FlatSVGIcon.ColorFilter { UIManager.getColor("Label.disabledForeground") ?: Color.GRAY }
+            icon as Icon
+        }.getOrNull()
+    }
+
+    private fun serviceLabel(type: ServiceType): String = when (type) {
+        ServiceType.TRANSLATOR -> localizationManager.getString("settings_services.translator")
+        ServiceType.TTS -> localizationManager.getString("settings_services.tts")
+        ServiceType.OCR -> localizationManager.getString("settings_services.ocr")
+        ServiceType.SPELL_CHECKER -> localizationManager.getString("settings_services.spell_checker")
+        ServiceType.DICTIONARY -> localizationManager.getString("settings_services.dictionary")
+        ServiceType.SUMMARIZER -> localizationManager.getString("settings_services.summarizer")
+        ServiceType.REWRITER -> localizationManager.getString("settings_services.rewriter")
+    }
+
+    // ── Plugin observation ────────────────────────────────────────────────────
+
+    private fun observePlugins() {
+        populateCombos(groupByType(pluginManager.activeServices.value.values))
+        scope.launch {
+            pluginManager.activeServices.collect { services ->
+                SwingUtilities.invokeLater { populateCombos(groupByType(services.values)) }
+            }
+        }
+    }
+
+    private fun groupByType(services: Collection<Service>): Map<ServiceType, List<Service>> {
+        val result = mutableMapOf<ServiceType, MutableList<Service>>()
+        services.forEach { service ->
+            val type = service.type ?: return@forEach
+            result.getOrPut(type) { mutableListOf() }.add(service)
+        }
+        return result
+    }
+
+    private fun populateCombos(servicesByType: Map<ServiceType, List<Service>>) {
+        withoutTrigger {
+            serviceComboBoxes.forEach { (type, combo) ->
+                val current = combo.selectedItem as? ServiceOption
+                combo.removeAllItems()
+                combo.addItem(null) // "None" option
+                servicesByType[type]?.forEach { service -> combo.addItem(ServiceOption(service.id, service.name)) }
+                if (current != null) {
+                    for (i in 0 until combo.itemCount) {
+                        if (combo.getItemAt(i)?.id == current.id) {
+                            combo.selectedIndex = i; break
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // ── Render ────────────────────────────────────────────────────────────────
+
+    override fun render(state: SettingsState) {
+        val c = state.workingConfiguration
+        withoutTrigger {
+            presetCombo.removeAllItems()
+            c.servicePresets.forEach { presetCombo.addItem(PresetInfo(it.id, localizedPresetName(it.name))) }
+
+            val active = c.servicePresets.find { it.id == c.activeServicePresetId }
+            active?.let { presetCombo.selectedItem = PresetInfo(it.id, localizedPresetName(it.name)) }
+
+            val hasPreset = active != null
+            renameBtn.isEnabled = hasPreset
+            deleteBtn.isEnabled = hasPreset && c.servicePresets.size > 1
+
+            active?.let { preset ->
+                serviceComboBoxes.forEach { (type, combo) ->
+                    val selectedId = preset.selectedServices[type]
+                    for (i in 0 until combo.itemCount) {
+                        if (combo.getItemAt(i)?.id == selectedId) {
+                            combo.selectedIndex = i; break
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // ── Preset CRUD ───────────────────────────────────────────────────────────
+
+    private fun onNew() {
+        val name = JOptionPane.showInputDialog(
+            this,
+            localizationManager.getString("settings_services.new_preset_prompt"),
+            localizationManager.getString("settings_services.new_preset_title"),
+            JOptionPane.PLAIN_MESSAGE
+        )
+        if (!name.isNullOrBlank()) store.dispatch(SettingsIntent.CreatePreset(name.trim()))
+    }
+
+    private fun onRename() {
+        val selected = presetCombo.selectedItem as? PresetInfo ?: return
+        val newName = JOptionPane.showInputDialog(
+            this,
+            localizationManager.getString("settings_services.rename_preset_prompt"),
+            localizationManager.getString("settings_services.rename_preset_title"),
+            JOptionPane.PLAIN_MESSAGE, null, null, selected.name
+        ) as? String
+        if (!newName.isNullOrBlank() && newName != selected.name)
+            store.dispatch(SettingsIntent.RenamePreset(selected.id, newName.trim()))
+    }
+
+    private fun onDelete() {
+        val selected = presetCombo.selectedItem as? PresetInfo ?: return
+        val result = JOptionPane.showConfirmDialog(
+            this,
+            localizationManager.getString("settings_services.delete_preset_confirm").format(selected.name),
+            localizationManager.getString("settings_services.delete_preset_title"),
+            JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE
+        )
+        if (result == JOptionPane.YES_OPTION) store.dispatch(SettingsIntent.DeletePreset(selected.id))
+    }
+
+    private fun localizedPresetName(name: String): String =
+        if (name == ServicePreset.DEFAULT_PRESET_NAME)
+            localizationManager.getString("settings_services.default_preset_name")
+        else name
+
+    private data class PresetInfo(val id: String, val name: String)
+    private data class ServiceOption(val id: String, val name: String)
+}

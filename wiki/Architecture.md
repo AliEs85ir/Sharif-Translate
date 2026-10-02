@@ -1,6 +1,6 @@
 # Architecture
 
-QTranslate is structured around Clean Architecture with an MVI (Model-View-Intent) pattern for the UI layer. This document explains the structure and the reasoning behind the key decisions.
+SharifTranslate is structured around Clean Architecture with an MVI (Model-View-Intent) pattern for the UI layer. This document explains the structure and the reasoning behind the key decisions.
 
 ---
 
@@ -179,7 +179,7 @@ Some settings take effect immediately without going through the draft cycle — 
 
 ## RTL support
 
-QTranslate mirrors its entire layout for RTL languages (Arabic, Hebrew, Farsi, etc.). The mechanism:
+SharifTranslate mirrors its entire layout for RTL languages (Arabic, Hebrew, Farsi, etc.). The mechanism:
 
 1. `LocalizationManager` exposes `isRtl: Boolean` based on the active language's `[meta] rtl = true` field
 2. On language change, `MainAppFrame` calls `applyComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT)` on the root pane — Swing propagates this down the component tree
@@ -195,8 +195,8 @@ The key rule: never use absolute constants (`WEST`, `EAST`, `LEFT`, `RIGHT`) in 
 Hotkeys are data-driven — stored in `Configuration.hotkeys` as `List<HotkeyBinding>`. Each binding holds a `keyCode`, `modifiers`, `HotkeyAction`, and `HotkeyScope`.
 
 `HotkeyScope` controls where the hotkey fires:
-- `GLOBAL` — registered with jKeymaster, fires system-wide even when QTranslate is not focused
-- `LOCAL` — registered via Swing `InputMap`/`ActionMap`, fires only when QTranslate has focus
+- `GLOBAL` — registered with jKeymaster, fires system-wide even when SharifTranslate is not focused
+- `LOCAL` — registered via Swing `InputMap`/`ActionMap`, fires only when SharifTranslate has focus
 
 `MainGlobalKeyListener` splits bindings by scope: GLOBAL bindings go to jKeymaster, LOCAL bindings are returned via `getLocalBindings()` for `MainAppFrame` to register on the `rootPane`.
 

@@ -1,6 +1,6 @@
 # Building from Source
 
-This guide walks you through compiling QTranslate from source and running it locally.
+This guide walks you through compiling SharifTranslate from source and running it locally.
 
 ---
 
@@ -14,15 +14,14 @@ This guide walks you through compiling QTranslate from source and running it loc
 
 You do not need to install Gradle — the project includes a Gradle wrapper (`./gradlew`).
 
-> **To build from source**, the Gradle build uses `jvmToolchain(21)` for compilation. Gradle will automatically download and use Java 21 via its toolchain provisioning — you do not need to install it manually. The compiled JAR targets Java 11 bytecode, so the final `QTranslate.jar` runs on any Java 11 or later installation.
+> **To build from source**, the Gradle build uses `jvmToolchain(21)` for compilation. Gradle will automatically download and use Java 21 via its toolchain provisioning — you do not need to install it manually. The compiled JAR targets Java 11 bytecode, so the final `SharifTranslate.jar` runs on any Java 11 or later installation.
 
 ---
 
-## Clone the repository
+## Open the project
 
 ```bash
-git clone https://github.com/ahatem/qtranslate.git
-cd qtranslate
+# Open your Sharif Translate checkout; no upstream remote is required.
 ```
 
 If you want to contribute, fork first and clone your fork instead.
@@ -46,14 +45,14 @@ This compiles `:api`, `:core`, `:ui-swing`, `:app`, and the bundled plugins. On 
 ## Run the application
 
 ```bash
-./gradlew :app:run -DappData="C:/Users/you/QTranslateData"
+./gradlew :app:run -DappData="C:/Users/you/SharifTranslateData"
 ```
 
-Replace the path with wherever you want QTranslate to store its data (plugins, settings, history). The directory will be created if it does not exist.
+Replace the path with wherever you want SharifTranslate to store its data (plugins, settings, history). The directory will be created if it does not exist.
 
 On macOS/Linux:
 ```bash
-./gradlew :app:run -DappData="/home/you/QTranslateData"
+./gradlew :app:run -DappData="/home/you/SharifTranslateData"
 ```
 
 ---
@@ -82,14 +81,14 @@ Each plugin is a separate Gradle subproject under `plugins/`:
 ./gradlew :plugins:ai-services:shadowJar
 ```
 
-The plugin JARs are written to `plugins/<name>/build/libs/`. Install them through the QTranslate UI as described in [Installing Plugins](Installing-Plugins.md).
+The plugin JARs are written to `plugins/<name>/build/libs/`. Install them through the SharifTranslate UI as described in [Installing Plugins](Installing-Plugins.md).
 
 ---
 
 ## Module structure
 
 ```
-qtranslate/
+shariftranslate/
   api/           ← interfaces, no implementations (plugins depend on this)
   core/          ← business logic, MVI stores, use cases, repositories
   ui-swing/      ← Swing UI components
@@ -106,11 +105,11 @@ qtranslate/
 
 ## IntelliJ IDEA setup
 
-1. **File → Open** and select the `qtranslate` directory
+1. **File → Open** and select the `shariftranslate` directory
 2. Wait for Gradle sync to complete
 3. Create a Run Configuration:
    - Type: **Gradle**
-   - Gradle project: `qtranslate`
+   - Gradle project: `shariftranslate`
    - Tasks: `:app:run`
    - VM options: `-DappData=C:/path/to/your/test/data`
 

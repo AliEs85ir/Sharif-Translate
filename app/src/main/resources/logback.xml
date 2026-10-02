@@ -27,11 +27,11 @@
          Rotates daily, keeps 30 days, max 50MB per file, 500MB total
          ================================================================ -->
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOG_DIR}/qtranslate.log</file>
+        <file>${LOG_DIR}/shariftranslate.log</file>
 
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <!-- Daily rollover, gzip compressed -->
-            <fileNamePattern>${LOG_DIR}/qtranslate.%d{yyyy-MM-dd}.log.gz</fileNamePattern>
+            <fileNamePattern>${LOG_DIR}/shariftranslate.%d{yyyy-MM-dd}.log.gz</fileNamePattern>
             <maxHistory>30</maxHistory>
             <totalSizeCap>500MB</totalSizeCap>
         </rollingPolicy>
@@ -46,7 +46,7 @@
          ================================================================ -->
 
     <!-- Your application code — DEBUG in dev, INFO in prod -->
-    <logger name="com.github.ahatem.qtranslate" level="DEBUG"/>
+    <logger name="org.shariftranslate" level="DEBUG"/>
 
     <!-- Ktor — INFO is enough, DEBUG is very noisy -->
     <logger name="io.ktor" level="INFO"/>

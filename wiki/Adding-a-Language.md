@@ -1,12 +1,12 @@
 # Adding a UI Language
 
-QTranslate's interface can be translated into any language using a plain TOML file. No programming knowledge required — if you can edit a text file, you can add a language.
+SharifTranslate's interface can be translated into any language using a plain TOML file. No programming knowledge required — if you can edit a text file, you can add a language.
 
 ---
 
 ## Bundled languages
 
-These languages ship with QTranslate and are always available:
+These languages ship with SharifTranslate and are always available:
 
 | Language | File | RTL |
 |----------|------|-----|
@@ -26,11 +26,11 @@ These languages ship with QTranslate and are always available:
 
 ## Quick start
 
-**1. Find your QTranslate data folder**
+**1. Find your SharifTranslate data folder**
 
 The path is printed in the logs at startup:
 ```
-[INFO] [Main] App data directory: C:\Users\you\QTranslate
+[INFO] [Main] App data directory: C:\Users\you\SharifTranslate
 ```
 
 **2. Copy the English source file**
@@ -77,7 +77,7 @@ last_updated = "2025-01-01"      # date you last updated it
 rtl          = true              # true for right-to-left languages, false otherwise
 ```
 
-`rtl = true` tells QTranslate to mirror the entire layout — all panels, buttons, and text alignment flip automatically. Set this for Arabic, Hebrew, Farsi, Urdu, and any other right-to-left language.
+`rtl = true` tells SharifTranslate to mirror the entire layout — all panels, buttons, and text alignment flip automatically. Set this for Arabic, Hebrew, Farsi, Urdu, and any other right-to-left language.
 
 ### Content sections
 
@@ -185,7 +185,7 @@ The filename must be a valid BCP 47 code. `arabic.toml` won't be recognised — 
 ## Tips
 
 - **Start with `[common]`** — these strings appear everywhere and have the most visible impact per line translated
-- **RTL and fonts** — if Arabic, Hebrew, or other RTL text looks wrong, make sure your system has the fonts installed. QTranslate uses your system's fallback font for characters the UI font can't render
+- **RTL and fonts** — if Arabic, Hebrew, or other RTL text looks wrong, make sure your system has the fonts installed. SharifTranslate uses your system's fallback font for characters the UI font can't render
 - **Reload without restarting** — switch to a different language in Settings and back to reload your file. No restart needed
 - **When in doubt, leave it in English** — a fallback is always better than a wrong translation. Mistranslated button labels are confusing; English fallbacks are just slightly incomplete
 
@@ -202,7 +202,7 @@ Two options:
 
 **Option 2 — Just attach it**
 
-[Open an issue](https://github.com/ahatem/qtranslate/issues/new) and attach the `.toml` file — we'll add it for you. No Git required.
+[Open an issue](../README.md) and attach the `.toml` file — we'll add it for you. No Git required.
 
 ---
 
