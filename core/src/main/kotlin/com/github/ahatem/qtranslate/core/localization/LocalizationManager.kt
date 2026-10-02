@@ -34,11 +34,10 @@ class LocalizationManager(
     val languagesDirectory: File = File(appDataDirectory, "languages").also { it.mkdirs() }
 
     val availableLanguages: List<String>
-        get() = languagesDirectory
+        get() = ((languagesDirectory
             .listFiles { _, name -> name.endsWith(".toml") }
             ?.map { it.nameWithoutExtension }
-            ?.sorted()
-            ?: emptyList()
+            ?: emptyList()) + "fa-IR").distinct().sorted()
 
     init {
         embeddedFallback = loadEmbeddedFallback()
@@ -80,9 +79,8 @@ class LocalizationManager(
             languageMetaCache[code]?.let { return@withContext it }
 
             runCatching {
-                val file = File(languagesDirectory, "${code.tag}.toml")
-                if (!file.exists()) return@withContext null
-                val parsed = parser.parse(file.readText())
+                val content = readLanguageContent(code) ?: return@withContext null
+                val parsed = parser.parse(content)
                 parsed.meta?.also { languageMetaCache[code] = it }
             }.getOrNull()
         }
@@ -91,17 +89,27 @@ class LocalizationManager(
     private fun loadAndCacheLanguage(code: LanguageCode) {
         if (translationCache.containsKey(code)) return
         runCatching {
-            val file = File(languagesDirectory, "${code.tag}.toml")
-            if (!file.exists()) {
+            val content = readLanguageContent(code)
+            if (content == null) {
                 logger.warn("Language file not found for '$code', skipping")
                 return
             }
-            val parsed = parser.parse(file.readText())
+            val parsed = parser.parse(content)
             translationCache[code]    = parsed.entries
             parsed.meta?.let { languageMetaCache[code] = it }
         }.onFailure {
             logger.error("Failed to load language file: $code", it)
         }
+    }
+
+    private fun readLanguageContent(code: LanguageCode): String? {
+        val file = File(languagesDirectory, "${code.tag}.toml")
+        if (file.exists()) return file.readText()
+        if (code.tag != "fa-IR") return null
+        return this::class.java.classLoader
+            .getResourceAsStream("localization/fa-IR.toml")
+            ?.bufferedReader(Charsets.UTF_8)
+            ?.use { it.readText() }
     }
 
     // -------------------------------------------------------------------------

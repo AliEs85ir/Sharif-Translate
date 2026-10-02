@@ -4,6 +4,9 @@ import com.formdev.flatlaf.FlatLaf
 import com.formdev.flatlaf.util.FontUtils
 import com.github.ahatem.qtranslate.core.settings.data.Configuration
 import com.github.ahatem.qtranslate.ui.swing.shared.fonts.RubikSansFont
+import com.github.ahatem.qtranslate.ui.swing.shared.fonts.IBMPlexSansFont
+import com.github.ahatem.qtranslate.ui.swing.shared.fonts.InterFont
+import com.github.ahatem.qtranslate.ui.swing.shared.fonts.VazirmatnFont
 import com.github.ahatem.qtranslate.ui.swing.shared.theme.ThemeManager
 import com.github.ahatem.qtranslate.ui.swing.shared.util.scaledUiFont
 import java.awt.Font
@@ -38,7 +41,10 @@ object AppUiSetup {
 
 
     private fun installFonts() {
-        RubikSansFont.installLazy()
+        RubikSansFont.install()
+        IBMPlexSansFont.install()
+        InterFont.install()
+        VazirmatnFont.install()
         FlatLaf.setPreferredFontFamily(RubikSansFont.FAMILY)
         FlatLaf.setPreferredLightFontFamily(RubikSansFont.FAMILY_LIGHT)
         FlatLaf.setPreferredSemiboldFontFamily(RubikSansFont.FAMILY_SEMI_BOLD)

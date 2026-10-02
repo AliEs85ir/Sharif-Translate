@@ -20,4 +20,12 @@ dependencies {
 
     implementation(libs.kotlinxCoroutinesSwing)
 
+    testImplementation(kotlin("test"))
+
+}
+
+tasks.processResources {
+    from(rootProject.file("languages/fa-IR.toml")) {
+        into("localization")
+    }
 }

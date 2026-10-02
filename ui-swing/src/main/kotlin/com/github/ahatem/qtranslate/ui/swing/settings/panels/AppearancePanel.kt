@@ -52,7 +52,22 @@ class AppearancePanel(
             addActionListener {
                 if (!isUpdatingFromState) {
                     val selected = selectedItem as? LanguageInfo ?: return@addActionListener
-                    applyDraft(store) { it.copy(interfaceLanguage = selected.code) }
+                    applyDraft(store) { config ->
+                        val persian = selected.code.startsWith("fa")
+                        fun languageFont(name: String) = when {
+                            persian && name == "Rubik" -> "Vazirmatn"
+                            !persian && name == "Vazirmatn" -> "Rubik"
+                            else -> name
+                        }
+                        config.copy(
+                            interfaceLanguage = selected.code,
+                            uiFontConfig = config.uiFontConfig.copy(name = languageFont(config.uiFontConfig.name)),
+                            editorFontConfig = config.editorFontConfig.copy(name = languageFont(config.editorFontConfig.name)),
+                            editorFallbackFontConfig = config.editorFallbackFontConfig.copy(
+                                name = languageFont(config.editorFallbackFontConfig.name)
+                            )
+                        )
+                    }
                 }
             }
         }
@@ -248,9 +263,21 @@ class AppearancePanel(
 
     private fun loadFontsAsync() {
         object : SwingWorker<Array<String>, Void>() {
-            override fun doInBackground(): Array<String> =
-                GraphicsEnvironment.getLocalGraphicsEnvironment()
-                    .availableFontFamilyNames.sorted().toTypedArray()
+            override fun doInBackground(): Array<String> {
+                val english = listOf("Inter", "IBM Plex Sans", "Rubik")
+                val persian = listOf("Vazirmatn", "Peyda", "B Nazanin")
+                val preferred = if (store.state.value.workingConfiguration.interfaceLanguage.startsWith("fa")) {
+                    persian + english
+                } else {
+                    english + persian
+                }
+                return GraphicsEnvironment.getLocalGraphicsEnvironment()
+                    .availableFontFamilyNames
+                    .sortedWith(compareBy<String> { name ->
+                        preferred.indexOf(name).takeIf { it >= 0 } ?: Int.MAX_VALUE
+                    }.thenBy { it })
+                    .toTypedArray()
+            }
 
             override fun done() {
                 val fonts = get()
@@ -332,6 +359,9 @@ class AppearancePanel(
             }
             titleBarCheck.isSelected = c.useUnifiedTitleBar
             scaleSpinner.value       = c.uiScale
+            if (uiFontCombo.isEnabled) uiFontCombo.selectedItem = c.uiFontConfig.name
+            if (editorFontCombo.isEnabled) editorFontCombo.selectedItem = c.editorFontConfig.name
+            if (fallbackFontCombo.isEnabled) fallbackFontCombo.selectedItem = c.editorFallbackFontConfig.name
             uiFontSize.value         = c.uiFontConfig.size
             editorFontSize.value     = c.editorFontConfig.size
             updatePreview()
