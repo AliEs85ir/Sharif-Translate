@@ -6,6 +6,7 @@ import com.github.ahatem.qtranslate.ui.swing.shared.widgets.Renderable
 import java.awt.BorderLayout
 import java.awt.ComponentOrientation
 import java.awt.FlowLayout
+import java.awt.Font
 import javax.swing.BorderFactory
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -23,6 +24,7 @@ class TranslationHistoryBar(
 
     private val statusLabel = JLabel().apply {
         border = BorderFactory.createEmptyBorder(0, 8, 0, 8)
+        font = font.deriveFont(Font.BOLD)
     }
 
     private val leftGroup = JPanel(FlowLayout(FlowLayout.LEADING, 2, 0)).apply {
@@ -38,6 +40,7 @@ class TranslationHistoryBar(
     }
 
     init {
+        border = BorderFactory.createEmptyBorder(4, 0, 4, 0)
         backwardButton.addActionListener { onBackward() }
         forwardButton.addActionListener { onForward() }
         imageTranslateButton.addActionListener { onImageTranslate() }

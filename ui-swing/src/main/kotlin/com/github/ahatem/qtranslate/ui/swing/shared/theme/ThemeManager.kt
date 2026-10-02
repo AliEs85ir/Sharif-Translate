@@ -129,6 +129,7 @@ class ThemeManager(
 
         try {
             theme.apply()
+            ModernUiDefaults.install()
             FlatLaf.updateUI()
             snapshot?.let { FlatAnimatedLafChange.hideSnapshotWithAnimation() }
 
@@ -147,6 +148,7 @@ class ThemeManager(
         logger.info("Startup theme: ${theme.name}  (${theme.id})")
         try {
             theme.apply()
+            ModernUiDefaults.install()
             currentTheme = theme
         } catch (e: Exception) {
             logger.error("Startup theme failed: ${theme.name}", e)
@@ -226,11 +228,13 @@ class ThemeManager(
         try {
             val fallback = findThemeById(fallbackId)
             fallback.apply()
+            ModernUiDefaults.install()
             FlatLaf.updateUI()
             currentTheme = fallback
         } catch (e: Exception) {
             logger.error("CRITICAL: default fallback also failed", e)
             FlatDarkLaf.setup()
+            ModernUiDefaults.install()
             FlatLaf.updateUI()
         }
     }

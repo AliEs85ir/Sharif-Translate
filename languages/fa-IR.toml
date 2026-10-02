@@ -44,6 +44,15 @@ configure = "پیکربندی"
 clear_all = "پاک کردن همه"
 auto_detect = "تشخیص خودکار"
 
+[quick_popup]
+more = "نمایش بیشتر"
+less = "نمایش کمتر"
+favorite = "افزودن به محبوب‌ها"
+collection = "افزودن به مجموعه"
+coming_soon = "در نسخهٔ بعدی در دسترس خواهد بود"
+swap = "جابه‌جایی زبان‌ها"
+original = "متن اصلی"
+
 [main_window]
 status_format = "با %s: %s ← %s"
 no_translator = "مترجمی انتخاب نشده"

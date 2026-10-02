@@ -50,6 +50,15 @@ configure = "Configure"
 clear_all = "Clear All"
 auto_detect = "Auto-Detect"
 
+[quick_popup]
+more = "Show more"
+less = "Show less"
+favorite = "Save to favorites"
+collection = "Add to collection"
+coming_soon = "Available in a future update"
+swap = "Swap languages"
+original = "Original text"
+
 # ===================================================================
 # MAIN APPLICATION WINDOW
 # ===================================================================

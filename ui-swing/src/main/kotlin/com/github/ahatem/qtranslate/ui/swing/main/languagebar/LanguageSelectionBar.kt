@@ -7,6 +7,7 @@ import com.github.ahatem.qtranslate.ui.swing.shared.util.GridBag
 import com.github.ahatem.qtranslate.ui.swing.shared.util.createButtonWithIcon
 import com.github.ahatem.qtranslate.ui.swing.shared.widgets.LanguageComboBox
 import com.github.ahatem.qtranslate.ui.swing.shared.widgets.Renderable
+import com.formdev.flatlaf.FlatClientProperties
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import javax.swing.JButton
@@ -39,6 +40,12 @@ class LanguageSelectionBar(
     private var isInCancelMode = false
 
     init {
+        border = javax.swing.BorderFactory.createEmptyBorder(4, 0, 4, 0)
+        listOf(clearButton, swapButton, translateButton).forEach {
+            it.putClientProperty(FlatClientProperties.STYLE, "arc: 16; focusWidth: 0")
+        }
+        sourceLanguageComboBox.putClientProperty(FlatClientProperties.STYLE, "arc: 16; focusWidth: 0")
+        targetLanguageComboBox.putClientProperty(FlatClientProperties.STYLE, "arc: 16; focusWidth: 0")
         clearButton.addActionListener { onClear() }
         swapButton.addActionListener { onSwap() }
         translateButton.addActionListener { if (isInCancelMode) onCancel() else onTranslate() }

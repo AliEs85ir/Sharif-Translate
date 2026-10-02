@@ -112,6 +112,15 @@ class MainAppFrame(
             },
             onListen = { mainStore.dispatch(MainIntent.ListenToText(TextSource.Output)) },
             onCopy = { mainStore.state.value.translatedText.copyToClipboard() },
+            onSourceLanguageSelected = { language ->
+                mainStore.dispatch(MainIntent.SelectSourceLanguage(language))
+                mainStore.dispatch(MainIntent.Translate())
+            },
+            onTargetLanguageSelected = { language ->
+                mainStore.dispatch(MainIntent.SelectTargetLanguage(language))
+                mainStore.dispatch(MainIntent.Translate())
+            },
+            onSwapLanguages = { mainStore.dispatch(MainIntent.SwapLanguages) },
             onSavePosition = { pos ->
                 settingsStore.dispatch(
                     SettingsIntent.ToggleSetting { it.copy(popupLastKnownPosition = pos) }
@@ -1132,10 +1141,12 @@ class MainAppFrame(
             isVisible = mainState.isQuickTranslateDialogVisible,
             isLoading = mainState.isLoading,
             translatedText = mainState.translatedText,
+            sourceText = mainState.inputText,
             isPinned = mainState.isQuickTranslateDialogPinned,
 
             sourceLanguage = displaySourceLanguage,
             targetLanguage = mainState.targetLanguage,
+            availableLanguages = mainState.availableLanguages,
 
             translatorSelectorState = QuickTranslateSelectorState(
                 availableTranslators = mainState.getAvailableServicesFor(ServiceType.TRANSLATOR),
@@ -1160,7 +1171,15 @@ class MainAppFrame(
                 listenTooltip = localizer.getString("common.listen"),
                 pinTooltip = localizer.getString("common.pin"),
                 unpinTooltip = localizer.getString("common.unpin"),
-                loadingText = localizer.getString("common.loading")
+                loadingText = localizer.getString("common.loading"),
+                more = localizer.getString("quick_popup.more"),
+                less = localizer.getString("quick_popup.less"),
+                favorite = localizer.getString("quick_popup.favorite"),
+                collection = localizer.getString("quick_popup.collection"),
+                comingSoon = localizer.getString("quick_popup.coming_soon"),
+                swap = localizer.getString("quick_popup.swap"),
+                autoDetect = localizer.getString("common.auto_detect"),
+                original = localizer.getString("quick_popup.original")
             )
         )
     }

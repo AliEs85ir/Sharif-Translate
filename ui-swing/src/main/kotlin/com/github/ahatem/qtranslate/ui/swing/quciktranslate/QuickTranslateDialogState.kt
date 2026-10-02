@@ -14,11 +14,13 @@ data class QuickTranslateDialogState(
     val isVisible: Boolean,
     val isLoading: Boolean,
     val translatedText: String,
+    val sourceText: String,
     val isPinned: Boolean,
 
     // --- The Data is now a first-class citizen ---
     val sourceLanguage: LanguageCode,
     val targetLanguage: LanguageCode,
+    val availableLanguages: List<LanguageCode>,
 
     val translatorSelectorState: QuickTranslateSelectorState,
     val actionsState: QuickTranslateActionsState,
@@ -58,5 +60,13 @@ data class DialogStrings(
     val listenTooltip: String,
     val pinTooltip: String,
     val unpinTooltip: String,
-    val loadingText: String
+    val loadingText: String,
+    val more: String,
+    val less: String,
+    val favorite: String,
+    val collection: String,
+    val comingSoon: String,
+    val swap: String,
+    val autoDetect: String,
+    val original: String
 )
