@@ -90,12 +90,13 @@ class AITranslatorService(
 
             val dto = json.decodeFromString<AutoDetectResponseDto>(clean)
 
+            require(dto.translation.isNotBlank()) { "AI returned an empty translation" }
             val detectedLang = dto.detectedLanguage
                 ?.let { tag -> runCatching { LanguageCode(tag) }.getOrNull() }
 
             Ok(TranslationResponse(translatedText = dto.translation.trim(), detectedLanguage = detectedLang))
         } catch (e: Exception) {
-            Err(ServiceError.InvalidResponseError("Failed to parse AI translation response: $raw", e))
+            Err(ServiceError.InvalidResponseError("AI translation response is missing valid translation text.", e))
         }
 
     @Serializable

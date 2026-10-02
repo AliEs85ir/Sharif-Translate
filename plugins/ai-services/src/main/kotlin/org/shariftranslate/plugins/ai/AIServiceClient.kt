@@ -211,6 +211,14 @@ class AIServiceClient(
         if (uri?.scheme !in setOf("http", "https") || uri?.host.isNullOrBlank()) {
             return ServiceError.InvalidInputError("AI Plugin: Base URL must be a valid HTTP or HTTPS URL.")
         }
+        if (uri?.rawQuery != null || uri?.rawFragment != null || uri?.rawUserInfo != null) {
+            return ServiceError.InvalidInputError("AI Plugin: Base URL must not contain a query, fragment or embedded credentials.")
+        }
+        if (current.customHeaders.isNotBlank() && runCatching {
+                headersJson.decodeFromString<Map<String, String>>(current.customHeaders)
+            }.isFailure) {
+            return ServiceError.InvalidInputError("AI Plugin: Custom Headers must be a JSON object containing string values.")
+        }
         if (current.model.isBlank() || !current.temperature.isFinite() || current.temperature !in 0.0..2.0 || current.maxTokens <= 0) {
             return ServiceError.InvalidInputError("AI Plugin: Check the model, temperature and maximum token settings.")
         }

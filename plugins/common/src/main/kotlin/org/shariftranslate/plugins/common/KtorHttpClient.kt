@@ -49,7 +49,9 @@ class KtorHttpClient(
         }
         if (config.enableRetry) {
             install(HttpRequestRetry) {
-                retryOnServerErrors(maxRetries = config.maxRetries)
+                maxRetries = config.maxRetries
+                // POST operations may already have been processed or billed by the service.
+                retryIf { request, response -> request.method == HttpMethod.Get && response.status.value in 500..599 }
                 exponentialDelay()
             }
         }
@@ -70,7 +72,7 @@ class KtorHttpClient(
                 }
                 if (body != null) {
                     // Default to JSON if no content-type specified
-                    val contentType = headers["Content-Type"] ?: "application/json"
+                    val contentType = headers.entries.firstOrNull { it.key.equals("Content-Type", ignoreCase = true) }?.value ?: "application/json"
                     contentType(ContentType.parse(contentType))
                     setBody(body)
                 }
@@ -336,18 +338,18 @@ class KtorHttpClient(
         response: HttpResponse,
         url: String
     ): Result<String, ServiceError> {
-        return when (response.status) {
-            HttpStatusCode.OK -> Ok(response.bodyAsText())
-            HttpStatusCode.Unauthorized, HttpStatusCode.Forbidden -> Err(
+        return when {
+            response.status.isSuccess() -> Ok(response.bodyAsText())
+            response.status == HttpStatusCode.Unauthorized || response.status == HttpStatusCode.Forbidden -> Err(
                 ServiceError.AuthenticationError("Authentication failed for $url")
             )
 
-            HttpStatusCode.TooManyRequests -> Err(
+            response.status == HttpStatusCode.TooManyRequests -> Err(
                 ServiceError.RateLimitError("Rate limit exceeded for $url")
             )
 
-            HttpStatusCode.PaymentRequired -> {
-                val errorBody = runCatching { response.bodyAsText() }.getOrDefault("")
+            response.status == HttpStatusCode.PaymentRequired -> {
+                val errorBody = response.bodyAsText().take(4096)
                 pluginContext.logger.error("HTTP 402 (Payment Required) for $url — $errorBody")
                 Err(
                     ServiceError.AuthenticationError(
@@ -359,7 +361,7 @@ class KtorHttpClient(
             }
 
             else -> {
-                val errorBody = runCatching { response.bodyAsText() }.getOrDefault("")
+                val errorBody = response.bodyAsText().take(4096)
                 pluginContext.logger.error("HTTP ${response.status.value} for $url — $errorBody")
                 Err(ServiceError.ServiceUnavailableError("HTTP ${response.status.value} for $url\n$errorBody"))
             }
@@ -370,18 +372,18 @@ class KtorHttpClient(
         response: HttpResponse,
         url: String
     ): Result<ByteArray, ServiceError> {
-        return when (response.status) {
-            HttpStatusCode.OK -> Ok(response.body<ByteArray>())
-            HttpStatusCode.Unauthorized, HttpStatusCode.Forbidden -> Err(
+        return when {
+            response.status.isSuccess() -> Ok(response.body<ByteArray>())
+            response.status == HttpStatusCode.Unauthorized || response.status == HttpStatusCode.Forbidden -> Err(
                 ServiceError.AuthenticationError("Authentication failed for $url")
             )
 
-            HttpStatusCode.TooManyRequests -> Err(
+            response.status == HttpStatusCode.TooManyRequests -> Err(
                 ServiceError.RateLimitError("Rate limit exceeded for $url")
             )
 
             else -> {
-                val errorBody = runCatching { response.bodyAsText() }.getOrDefault("")
+                val errorBody = response.bodyAsText().take(4096)
                 pluginContext.logger.error("HTTP ${response.status.value} for $url — $errorBody")
                 Err(ServiceError.ServiceUnavailableError("HTTP ${response.status.value} for $url\n$errorBody"))
             }

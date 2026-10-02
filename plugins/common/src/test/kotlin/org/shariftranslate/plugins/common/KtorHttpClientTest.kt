@@ -73,4 +73,28 @@ class KtorHttpClientTest {
     @Test fun malformedJsonIsAnInvalidResponse(): Unit = runBlocking {
         assertIs<ServiceError.InvalidResponseError>(createJsonParser<List<String>>(context).parse("<html>error</html>").getError())
     }
+    @Test fun successCodesAndPostRetryPolicy() = runBlocking {
+        val calls = java.util.concurrent.atomic.AtomicInteger()
+        val receivedType = java.util.concurrent.atomic.AtomicReference<String>()
+        val server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0)
+        server.createContext("/") { exchange ->
+            calls.incrementAndGet()
+            receivedType.set(exchange.requestHeaders.getFirst("Content-Type"))
+            exchange.requestBody.readBytes()
+            val code = if (exchange.requestURI.path == "/created") 201 else 503
+            exchange.sendResponseHeaders(code, 2)
+            exchange.responseBody.use { it.write("ok".toByteArray()) }
+        }
+        server.start()
+        val client = KtorHttpClient(context)
+        val url = "http://127.0.0.1:${server.address.port}"
+        try {
+            assertEquals("ok", client.post("$url/created", mapOf("content-type" to "text/plain"), "test").get())
+            assertTrue(receivedType.get().startsWith("text/plain"))
+            calls.set(0)
+            assertIs<ServiceError.ServiceUnavailableError>(client.post(url, body = "{}").getError())
+            assertEquals(1, calls.get(), "A failed POST must not duplicate a billable AI request")
+        } finally { client.close(); server.stop(0); context.scope.cancel() }
+    }
+
 }

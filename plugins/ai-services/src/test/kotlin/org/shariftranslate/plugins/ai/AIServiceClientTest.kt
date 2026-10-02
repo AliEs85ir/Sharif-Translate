@@ -67,6 +67,8 @@ class AIServiceClientTest {
             val translated = AITranslatorService(client).translate(TranslationRequest("Hello\nline two", LanguageCode.AUTO, LanguageCode.FARSI)).get()
             assertEquals("سلام!\nخط دوم", translated?.translatedText)
             assertEquals(LanguageCode.ENGLISH, translated?.detectedLanguage)
+            response.set("""{"choices":[{"message":{"content":"{\"translation\":\" \"}"}}]}""")
+            assertIs<ServiceError.InvalidResponseError>(AITranslatorService(client).translate(TranslationRequest("Hello", LanguageCode.AUTO, LanguageCode.FARSI)).getError())
         } finally { http.close(); server.stop(0); context.scope.cancel() }
     }
 
@@ -76,6 +78,10 @@ class AIServiceClientTest {
         val client = AIServiceClient(context, http) { settings }
         try {
             assertIs<ServiceError.AuthenticationError>(client.complete("translate", "test").getError())
+            settings = settings.copy(baseUrl = "http://localhost:1/v1", customHeaders = "{invalid}")
+            assertIs<ServiceError.InvalidInputError>(client.complete("translate", "test").getError())
+            settings = settings.copy(baseUrl = "http://localhost:1/v1?key=test", customHeaders = "")
+            assertIs<ServiceError.InvalidInputError>(client.complete("translate", "test").getError())
             settings = settings.copy(baseUrl = "not a URL")
             assertIs<ServiceError.InvalidInputError>(client.complete("translate", "test").getError())
             settings = settings.copy(baseUrl = "http://localhost:1/v1", maxTokens = 0)
