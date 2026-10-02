@@ -27,7 +27,7 @@ object GoogleLanguageMapper : LanguageMapper {
         LanguageCode.LAO, LanguageCode.LATVIAN, LanguageCode.LITHUANIAN,
         LanguageCode.MACEDONIAN, LanguageCode.MALAY, LanguageCode.MALTESE,
         LanguageCode.MONGOLIAN, LanguageCode.NEPALI, LanguageCode.NORWEGIAN,
-        LanguageCode.POLISH, LanguageCode.ROMANIAN, LanguageCode.SERBIAN,
+        LanguageCode.FARSI, LanguageCode.POLISH, LanguageCode.ROMANIAN, LanguageCode.SERBIAN,
         LanguageCode.SINHALA, LanguageCode.SLOVAK, LanguageCode.SLOVENIAN,
         LanguageCode.SOMALI, LanguageCode.SWAHILI, LanguageCode.SWEDISH,
         LanguageCode.TAMIL, LanguageCode.TELUGU, LanguageCode.THAI,
