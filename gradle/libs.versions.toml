@@ -1,0 +1,81 @@
+[versions]
+kotlin = "2.3.21"
+kotlinxCoroutines = "1.10.2"
+kotlinxDatetime = "0.7.1"
+kotlinxSerializationJSON = "1.11.0"
+result = "2.3.1"
+ktor = "3.4.3"
+flatlaf = "3.7.1"
+
+jintellitype = "1.5.6"
+jnativehook = "2.2.2"
+jkeymaster = "1.3"
+
+jlayer = "1.0.3"
+jsoup = "1.22.2"
+commonmark = "0.24.0"
+jsvg = "2.0.0"
+miglayout = "11.4.3"
+swt = "3.133.0"
+shadow = "9.4.1"
+diffUtils = "4.16"
+datastore = "1.3.0-alpha07"
+
+slf4j = "2.0.17"
+logback = "1.5.32"
+
+[libraries]
+# Kotlin ecosystem
+kotlinGradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+kotlinxCoroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
+kotlinxCoroutinesSwing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "kotlinxCoroutines" }
+kotlinxDatetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinxDatetime" }
+kotlinxSerialization = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJSON" }
+
+# Ktor
+ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
+ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
+ktor-client-content-encoding = { module = "io.ktor:ktor-client-encoding", version.ref = "ktor" }
+ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
+ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
+
+result = { module = "com.michael-bull.kotlin-result:kotlin-result", version.ref = "result" }
+result-coroutines = { module = "com.michael-bull.kotlin-result:kotlin-result-coroutines", version.ref = "result" }
+
+# UI
+flatlaf = { module = "com.formdev:flatlaf", version.ref = "flatlaf" }
+flatlaf-intellij = { module = "com.formdev:flatlaf-intellij-themes", version.ref = "flatlaf" }
+flatlaf-extras = { module = "com.formdev:flatlaf-extras", version.ref = "flatlaf" }
+jlayer = { module = "com.github.umjammer:jlayer", version.ref = "jlayer" }
+jsvg = { module = "com.github.weisj:jsvg", version.ref = "jsvg" }
+miglayout = { module = "com.miglayout:miglayout-swing", version.ref = "miglayout" }
+swt = { module = "org.eclipse.platform:org.eclipse.swt.win32.win32.x86_64", version.ref = "swt" }
+
+jintellitype = { module = "com.melloware:jintellitype", version.ref = "jintellitype" }
+jnativehook = { module = "com.github.kwhat:jnativehook", version.ref = "jnativehook" }
+jkeymaster = { module = "com.github.tulskiy:jkeymaster", version.ref = "jkeymaster" }
+
+
+# Data store
+datastore-preferences = { module = "androidx.datastore:datastore-preferences-core", version.ref = "datastore" }
+
+# Parsing
+jsoup = { module = "org.jsoup:jsoup", version.ref = "jsoup" }
+java-diff-utils = { module = "io.github.java-diff-utils:java-diff-utils", version.ref = "diffUtils" }
+commonmark = { module = "org.commonmark:commonmark", version.ref = "commonmark" }
+
+# Logging
+slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
+logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
+
+[bundles]
+kotlinxEcosystem = ["kotlinxCoroutines", "kotlinxCoroutinesSwing", "kotlinxDatetime", "kotlinxSerialization"]
+ktor = ["ktor-client-core", "ktor-client-cio", "ktor-client-content-negotiation", "ktor-serialization-kotlinx-json", "ktor-client-content-encoding"]
+result = ["result", "result-coroutines"]
+flatlaf = ["flatlaf", "flatlaf-intellij", "flatlaf-extras"]
+datastore = ["datastore-preferences"]
+
+[plugins]
+kotlinPluginSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }
+
