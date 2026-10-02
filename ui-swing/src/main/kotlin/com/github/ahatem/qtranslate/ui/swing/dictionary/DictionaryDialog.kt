@@ -14,6 +14,8 @@ class DictionaryDialog(owner: Frame) : JDialog(owner, false) {
     private val searchField = JTextField()
     private val lookupButton = JButton()
     private val closeButton = JButton()
+    private val collectionButton = JButton("Collections")
+    private val favoriteButton = JButton("☆")
 
     private val hintLabel = JLabel("", SwingConstants.CENTER).apply {
         foreground = UIManager.getColor("Label.disabledForeground")
@@ -57,6 +59,8 @@ class DictionaryDialog(owner: Frame) : JDialog(owner, false) {
         val buttonPanel = JPanel().apply {
             layout = BoxLayout(this, BoxLayout.X_AXIS)
             add(Box.createHorizontalGlue())
+            add(favoriteButton)
+            add(collectionButton)
             add(closeButton)
         }
         closeButton.putClientProperty("JButton.buttonType", "default")
@@ -71,6 +75,8 @@ class DictionaryDialog(owner: Frame) : JDialog(owner, false) {
         searchField.addActionListener { triggerLookup() }
         lookupButton.addActionListener { triggerLookup() }
         closeButton.addActionListener { isVisible = false }
+        collectionButton.addActionListener { state?.onSaveToCollection?.invoke(searchField.text.trim()) }
+        favoriteButton.addActionListener { state?.let { it.onToggleFavorite(it.lookedUpWord) } }
 
         serviceCombo.addActionListener {
             if (!updatingFromState) {
@@ -90,6 +96,10 @@ class DictionaryDialog(owner: Frame) : JDialog(owner, false) {
         title = newState.title
         lookupButton.text = newState.lookupButtonLabel
         closeButton.text = newState.closeLabel
+        collectionButton.text = newState.collectionLabel
+        favoriteButton.text = if (newState.isFavorite) "★" else "☆"
+        favoriteButton.toolTipText = newState.favoriteLabel
+        favoriteButton.isEnabled = newState.lookedUpWord.isNotBlank()
         loadingLabel.text = newState.loadingMessage
 
         hintLabel.text = when {

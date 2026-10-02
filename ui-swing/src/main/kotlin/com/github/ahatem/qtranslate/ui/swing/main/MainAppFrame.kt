@@ -19,6 +19,9 @@ import com.github.ahatem.qtranslate.core.shared.StatusCode
 import com.github.ahatem.qtranslate.core.shared.arch.ServiceType
 import com.github.ahatem.qtranslate.core.shared.notification.NotificationCode
 import com.github.ahatem.qtranslate.core.history.HistorySnapshot
+import com.github.ahatem.qtranslate.core.collections.CollectionRepository
+import com.github.ahatem.qtranslate.core.collections.CollectionKind
+import com.github.ahatem.qtranslate.ui.swing.collections.CollectionsDialog
 import com.github.ahatem.qtranslate.core.localization.getDisplayName
 import com.github.ahatem.qtranslate.ui.swing.about.InfoDialog
 import com.github.ahatem.qtranslate.ui.swing.about.InfoDialogState
@@ -65,7 +68,8 @@ class MainAppFrame(
     private val themeManager: ThemeManager,
     private val pluginManager: PluginManager,
     private val localizer: LocalizationManager,
-    private val notificationBus: com.github.ahatem.qtranslate.core.shared.notification.NotificationBus
+    private val notificationBus: com.github.ahatem.qtranslate.core.shared.notification.NotificationBus,
+    private val collectionRepository: CollectionRepository
 ) : JFrame("QTranslate") {
 
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default + CoroutineName("MainAppFrame"))
@@ -75,6 +79,7 @@ class MainAppFrame(
     private val aboutDialog by lazy { InfoDialog(this) }
     private val updateDialog by lazy { UpdateDialog(this) }
     private val historyDialog by lazy { HistoryDialog(this) }
+    private val collectionsDialog by lazy { CollectionsDialog(this, collectionRepository, appScope, localizer) }
     private val dictionaryDialog by lazy { DictionaryDialog(this) }
     private val loadingIndicator by lazy { LoadingIndicator(this) }
 
@@ -135,7 +140,11 @@ class MainAppFrame(
                     SettingsIntent.ToggleSetting { it.copy(popupLastKnownSize = size) }
                 )
             },
-            onPinToggled = { mainStore.dispatch(MainIntent.ToggleQuickTranslateDialogPin) }
+            onPinToggled = { mainStore.dispatch(MainIntent.ToggleQuickTranslateDialogPin) },
+            onFavoriteToggled = { toggleCollection(CollectionRepository.FAVORITES_ID, mainStore.state.value.inputText) },
+            onCollectionToggled = { id -> toggleCollection(id, mainStore.state.value.inputText) },
+            onNewCollection = { createCollectionWithText(mainStore.state.value.inputText) },
+            onManageCollections = { showCollectionsDialog() }
         )
     }
 
@@ -257,6 +266,20 @@ class MainAppFrame(
             setupGlobalHotkeys()
 
             observeStateAndEvents()
+            appScope.launch {
+                collectionRepository.collections.collect {
+                    withContext(Dispatchers.Swing) {
+                        if (collectionsDialog.isVisible) collectionsDialog.refresh()
+                        if (quickTranslateDialog.isVisible) quickTranslateDialog.render(
+                            mapToQuickTranslateState(mainStore.state.value, settingsStore.state.value.workingConfiguration)
+                        )
+                        if (quickDictionaryDialog.isVisible) quickDictionaryDialog.render(
+                            buildQuickDictionaryDialogState(mainStore.state.value, settingsStore.state.value.workingConfiguration)
+                        )
+                        if (dictionaryDialog.isVisible) dictionaryDialog.render(buildDictionaryDialogState())
+                    }
+                }
+            }
             isVisible = true
 
             // applyOrientation must run AFTER switchLayout's invokeLater has fired.
@@ -1118,6 +1141,12 @@ class MainAppFrame(
         }
 
         jMenuBar = JMenuBar().apply {
+            add(JMenu(localizer.getString("collections.title")).apply {
+                add(JMenuItem(localizer.getString("collections.manage")).apply { addActionListener { showCollectionsDialog() } })
+                addSeparator()
+                add(JMenuItem(localizer.getString("collections.save_input")).apply { addActionListener { showCollectionPicker(mainStore.state.value.inputText) } })
+                add(JMenuItem(localizer.getString("collections.save_translation")).apply { addActionListener { showCollectionPicker(mainStore.state.value.translatedText) } })
+            })
             add(Box.createHorizontalGlue())
             add(settingsButton)
         }
@@ -1147,6 +1176,10 @@ class MainAppFrame(
             translatedText = mainState.translatedText,
             sourceText = mainState.inputText,
             isPinned = mainState.isQuickTranslateDialogPinned,
+            isFavorite = collectionRepository.containing(mainState.inputText).any { it.id == CollectionRepository.FAVORITES_ID },
+            collections = collectionRepository.collections.value.filter { it.kind == CollectionKind.USER }.map {
+                CollectionChoice(it.id, it.name, it.items.any { item -> item.text == mainState.inputText.trim() })
+            },
 
             sourceLanguage = displaySourceLanguage,
             targetLanguage = mainState.targetLanguage,
@@ -1179,8 +1212,10 @@ class MainAppFrame(
                 more = localizer.getString("quick_popup.more"),
                 less = localizer.getString("quick_popup.less"),
                 favorite = localizer.getString("quick_popup.favorite"),
+                removeFavorite = localizer.getString("collections.remove_favorite"),
                 collection = localizer.getString("quick_popup.collection"),
-                comingSoon = localizer.getString("quick_popup.coming_soon"),
+                manageCollections = localizer.getString("collections.manage"),
+                newCollection = localizer.getString("collections.new"),
                 swap = localizer.getString("quick_popup.swap"),
                 autoDetect = localizer.getString("common.auto_detect"),
                 original = localizer.getString("quick_popup.original"),
@@ -1315,6 +1350,11 @@ class MainAppFrame(
             availableDictionaries = availableDicts,
             selectedDictionaryId  = selectedDictId,
             onLookup = { word -> mainStore.dispatch(MainIntent.LookupWord(word, resolvedLang)) },
+            onSaveToCollection = { text -> showCollectionPicker(text) },
+            collectionLabel = localizer.getString("collections.title"),
+            isFavorite = collectionRepository.containing(s.dictionaryWord).any { it.id == CollectionRepository.FAVORITES_ID },
+            onToggleFavorite = { text -> toggleCollection(CollectionRepository.FAVORITES_ID, text) },
+            favoriteLabel = localizer.getString("collections.favorites"),
             onDictionarySelected = { serviceId ->
                 settingsStore.dispatch(
                     SettingsIntent.UpdateServiceInActivePreset(
@@ -1374,9 +1414,14 @@ class MainAppFrame(
                 synonymsLabel    = localizer.getString("dictionary_dialog.synonyms_label"),
                 pinTooltip       = localizer.getString("common.pin"),
                 unpinTooltip     = localizer.getString("common.unpin"),
-                closeTooltip     = localizer.getString("common.close")
+                closeTooltip     = localizer.getString("common.close"),
+                collectionLabel = localizer.getString("collections.title"),
+                favoriteLabel = localizer.getString("collections.favorites")
             ),
             onLookup = { word -> mainStore.dispatch(MainIntent.LookupWord(word, resolvedLang)) },
+            onSaveToCollection = { text -> showCollectionPicker(text) },
+            isFavorite = collectionRepository.containing(mainState.dictionaryWord).any { it.id == CollectionRepository.FAVORITES_ID },
+            onToggleFavorite = { text -> toggleCollection(CollectionRepository.FAVORITES_ID, text) },
             onDictionarySelected = { serviceId ->
                 settingsStore.dispatch(
                     SettingsIntent.UpdateServiceInActivePreset(
@@ -1413,6 +1458,78 @@ class MainAppFrame(
         historyDialog.render(buildHistoryDialogState())
         historyDialog.isVisible = true
         historyDialog.toFront()
+    }
+
+    private fun showCollectionsDialog() {
+        collectionsDialog.refresh()
+        collectionsDialog.applyComponentOrientation(
+            if (localizer.isRtl) ComponentOrientation.RIGHT_TO_LEFT else ComponentOrientation.LEFT_TO_RIGHT
+        )
+        collectionsDialog.isVisible = true
+        collectionsDialog.toFront()
+    }
+
+    private fun toggleCollection(id: String, text: String) {
+        if (text.isBlank()) return
+        appScope.launch {
+            try {
+                if (collectionRepository.containing(text).any { it.id == id }) collectionRepository.remove(id, text.trim())
+                else collectionRepository.add(id, text)
+            } catch (e: Exception) { showCollectionError(e) }
+        }
+    }
+
+    private fun createCollectionWithText(text: String) {
+        val name = JOptionPane.showInputDialog(this, localizer.getString("collections.name_prompt"))?.trim()
+        if (name.isNullOrEmpty()) return
+        appScope.launch {
+            try {
+                val id = collectionRepository.create(name)
+                if (text.isNotBlank()) collectionRepository.add(id, text)
+            } catch (e: Exception) { showCollectionError(e) }
+        }
+    }
+
+    private fun showCollectionPicker(text: String) {
+        if (text.isBlank()) return
+        val choices = collectionRepository.collections.value
+        val checks = choices.map { collection ->
+            JCheckBox(
+                if (collection.kind == CollectionKind.SYSTEM) localizer.getString("collections.favorites") else collection.name,
+                collection.items.any { it.text == text.trim() }
+            )
+        }
+        val newName = JTextField(22)
+        val panel = JPanel(BorderLayout(0, 8)).apply {
+            add(JLabel(localizer.getString("collections.choose")), BorderLayout.NORTH)
+            add(JScrollPane(JPanel().apply {
+                layout = BoxLayout(this, BoxLayout.Y_AXIS)
+                checks.forEach(::add)
+            }).apply { preferredSize = Dimension(280, 160) }, BorderLayout.CENTER)
+            add(JPanel(BorderLayout(5, 0)).apply {
+                add(JLabel(localizer.getString("collections.new")), BorderLayout.WEST)
+                add(newName, BorderLayout.CENTER)
+            }, BorderLayout.SOUTH)
+        }
+        if (JOptionPane.showConfirmDialog(this, panel, localizer.getString("collections.title"), JOptionPane.OK_CANCEL_OPTION) != JOptionPane.OK_OPTION) return
+        val selected = checks.map { it.isSelected }
+        val name = newName.text.trim()
+        appScope.launch {
+            try {
+                choices.forEachIndexed { index, collection ->
+                    val wasIncluded = collection.items.any { it.text == text.trim() }
+                    if (selected[index] && !wasIncluded) collectionRepository.add(collection.id, text)
+                    if (!selected[index] && wasIncluded) collectionRepository.remove(collection.id, text.trim())
+                }
+                if (name.isNotEmpty()) collectionRepository.add(collectionRepository.create(name), text)
+            } catch (e: Exception) { showCollectionError(e) }
+        }
+    }
+
+    private fun showCollectionError(e: Exception) {
+        SwingUtilities.invokeLater {
+            JOptionPane.showMessageDialog(this, e.message, localizer.getString("collections.title"), JOptionPane.ERROR_MESSAGE)
+        }
     }
 
     private fun buildHistoryDialogState(): HistoryDialogState {

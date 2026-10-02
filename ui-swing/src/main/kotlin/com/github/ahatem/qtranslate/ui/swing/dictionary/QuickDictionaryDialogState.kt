@@ -36,7 +36,10 @@ data class QuickDictionaryDialogState(
     val onPinToggled: () -> Unit,
     val onClose: () -> Unit,
     val onSavePosition: (Position) -> Unit,
-    val onSaveSize: (Size) -> Unit
+    val onSaveSize: (Size) -> Unit,
+    val onSaveToCollection: (String) -> Unit = {},
+    val isFavorite: Boolean = false,
+    val onToggleFavorite: (String) -> Unit = {}
 ) : UiState
 
 data class QuickDictionaryConfig(
@@ -59,5 +62,7 @@ data class QuickDictionaryStrings(
     val synonymsLabel: String,
     val pinTooltip: String,
     val unpinTooltip: String,
-    val closeTooltip: String
+    val closeTooltip: String,
+    val collectionLabel: String = "Collections",
+    val favoriteLabel: String = "Favorites"
 )

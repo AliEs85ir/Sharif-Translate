@@ -85,7 +85,8 @@ fun main() = runBlocking {
             themeManager     = deps.themeManager,
             localizer        = deps.localizationManager,
             pluginManager    = deps.pluginManager,
-            notificationBus  = deps.notificationBus
+            notificationBus  = deps.notificationBus,
+            collectionRepository = deps.collectionRepository
         )
         logger.info("Main window launched")
     }

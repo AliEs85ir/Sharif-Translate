@@ -58,6 +58,13 @@ class QuickDictionaryDialog(
     }
     private val pinButton = createButtonWithIcon(iconManager, "icons/lucide/pin.svg", 14)
     private val closeButton = createButtonWithIcon(iconManager, "icons/lucide/close.svg", 16)
+    private val collectionButton = createButtonWithIcon(iconManager, "icons/lucide/book-open.svg", 16).apply {
+        addActionListener { currentState?.let { state -> state.onSaveToCollection(searchField.text.trim()) } }
+    }
+    private val favoriteButton = JButton("☆").apply {
+        putClientProperty("JButton.buttonType", "toolBarButton")
+        addActionListener { currentState?.let { state -> state.onToggleFavorite(state.lookedUpWord) } }
+    }
 
     // Auto-source cycling button — mirrors DictionaryPanel
     private val activeLinkIcon: FlatSVGIcon =
@@ -210,6 +217,10 @@ class QuickDictionaryDialog(
         loadingLabel.text = state.strings.loadingMessage
         pinButton.toolTipText = if (state.isPinned) state.strings.unpinTooltip else state.strings.pinTooltip
         closeButton.toolTipText = state.strings.closeTooltip
+        collectionButton.toolTipText = state.strings.collectionLabel
+        favoriteButton.text = if (state.isFavorite) "★" else "☆"
+        favoriteButton.toolTipText = state.strings.favoriteLabel
+        favoriteButton.isEnabled = state.lookedUpWord.isNotBlank()
 
         // Sync auto-source cycling button
         val autoLabel = when (state.autoSource) {
@@ -344,6 +355,8 @@ class QuickDictionaryDialog(
             isOpaque = false
             layout = BoxLayout(this, BoxLayout.X_AXIS)
             add(autoSourceButton)
+            add(favoriteButton)
+            add(collectionButton)
             add(Box.createRigidArea(Dimension(4, 0)))
             add(pinButton)
             add(Box.createRigidArea(Dimension(4, 0)))

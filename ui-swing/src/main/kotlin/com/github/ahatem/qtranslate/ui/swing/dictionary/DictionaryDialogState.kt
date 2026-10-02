@@ -20,4 +20,9 @@ data class DictionaryDialogState(
     val selectedDictionaryId: String? = null,
     val onLookup: (word: String) -> Unit,
     val onDictionarySelected: (serviceId: String) -> Unit = {},
+    val onSaveToCollection: (String) -> Unit = {},
+    val collectionLabel: String = "Collections",
+    val isFavorite: Boolean = false,
+    val onToggleFavorite: (String) -> Unit = {},
+    val favoriteLabel: String = "Favorites",
 )

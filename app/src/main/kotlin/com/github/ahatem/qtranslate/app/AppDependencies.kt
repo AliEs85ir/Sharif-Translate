@@ -1,6 +1,7 @@
 package com.github.ahatem.qtranslate.app
 
 import com.github.ahatem.qtranslate.core.history.HistoryRepository
+import com.github.ahatem.qtranslate.core.collections.CollectionRepository
 import com.github.ahatem.qtranslate.core.localization.LanguageTomlParser
 import com.github.ahatem.qtranslate.core.localization.LocalizationManager
 import com.github.ahatem.qtranslate.core.main.domain.usecase.CheckForUpdatesUseCase
@@ -58,7 +59,8 @@ class AppDependencies(
     val iconManager: IconManager,
     val themeManager: ThemeManager,
     val localizationManager: LocalizationManager,
-    val notificationBus: NotificationBus
+    val notificationBus: NotificationBus,
+    val collectionRepository: CollectionRepository
 )
 
 /**
@@ -144,6 +146,13 @@ suspend fun buildDependencies(
         logger           = loggerFactory.getLogger("HistoryRepository"),
         json             = Json { ignoreUnknownKeys = true; isLenient = true }
     )
+
+    val collectionRepository = CollectionRepository(
+        appDataDirectory = appData,
+        logger = loggerFactory.getLogger("CollectionRepository"),
+        json = Json { ignoreUnknownKeys = true }
+    )
+    collectionRepository.load()
 
     val audioPlayer = JLayerAudioPlayer(
         scope  = appScope,
@@ -251,6 +260,7 @@ suspend fun buildDependencies(
         iconManager         = iconManager,
         themeManager        = themeManager,
         localizationManager = localizationManager,
-        notificationBus     = notificationBus
+        notificationBus     = notificationBus,
+        collectionRepository = collectionRepository
     )
 }

@@ -16,6 +16,8 @@ data class QuickTranslateDialogState(
     val translatedText: String,
     val sourceText: String,
     val isPinned: Boolean,
+    val isFavorite: Boolean,
+    val collections: List<CollectionChoice>,
 
     // --- The Data is now a first-class citizen ---
     val sourceLanguage: LanguageCode,
@@ -27,6 +29,8 @@ data class QuickTranslateDialogState(
     val config: DialogConfig,
     val strings: DialogStrings
 ) : UiState
+
+data class CollectionChoice(val id: String, val name: String, val included: Boolean)
 
 /**
  * Configuration for how the dialog should behave physically. This is a subset of your main Configuration.
@@ -64,8 +68,10 @@ data class DialogStrings(
     val more: String,
     val less: String,
     val favorite: String,
+    val removeFavorite: String,
     val collection: String,
-    val comingSoon: String,
+    val manageCollections: String,
+    val newCollection: String,
     val swap: String,
     val autoDetect: String,
     val original: String,

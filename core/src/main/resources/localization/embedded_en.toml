@@ -61,6 +61,32 @@ original = "Original text"
 edit_hint = "Edit to translate again"
 translator = "Translator"
 
+[collections]
+title = "Collections"
+manage = "Manage collections"
+favorites = "Favorites"
+remove_favorite = "Remove from Favorites"
+new = "New collection"
+rename = "Rename"
+delete = "Delete"
+delete_confirm = "Delete this collection and its saved items?"
+pin = "Pin / Unpin"
+up = "Move up"
+down = "Move down"
+add_text = "Add text"
+remove = "Remove"
+copy_to = "Copy to collection"
+sort = "Sort:"
+sort_newest = "Newest"
+sort_oldest = "Oldest"
+sort_alphabetical = "Alphabetical"
+sort_manual = "Manual"
+name_prompt = "Collection name:"
+text_prompt = "Text to save:"
+save_input = "Save source text"
+save_translation = "Save translation"
+choose = "Choose a collection:"
+
 # ===================================================================
 # MAIN APPLICATION WINDOW
 # ===================================================================

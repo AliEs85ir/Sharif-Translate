@@ -37,7 +37,11 @@ class QuickTranslateDialog(
     private val onSwapLanguages: () -> Unit,
     private val onSavePosition: (Position) -> Unit,
     private val onSaveSize: (Size) -> Unit,
-    private val onPinToggled: () -> Unit
+    private val onPinToggled: () -> Unit,
+    private val onFavoriteToggled: () -> Unit,
+    private val onCollectionToggled: (String) -> Unit,
+    private val onNewCollection: () -> Unit,
+    private val onManageCollections: () -> Unit
 ) : JDialog(owner, ModalityType.MODELESS), Renderable<QuickTranslateDialogState> {
 
     private companion object {
@@ -311,10 +315,11 @@ class QuickTranslateDialog(
         listenButton.toolTipText = state.strings.listenTooltip
         copyButton.toolTipText = state.strings.copyTooltip
         closeButton.toolTipText = UIManager.getString("InternalFrameTitlePane.closeButtonAccessibleName") ?: "Close"
-        favoriteButton.toolTipText = "${state.strings.favorite} · ${state.strings.comingSoon}"
-        collectionButton.toolTipText = "${state.strings.collection} · ${state.strings.comingSoon}"
-        favoriteButton.isEnabled = false
-        collectionButton.isEnabled = false
+        favoriteButton.toolTipText = if (state.isFavorite) state.strings.removeFavorite else state.strings.favorite
+        favoriteButton.isEnabled = state.sourceText.isNotBlank()
+        favoriteButton.foreground = if (state.isFavorite) Color(225, 164, 24) else labelFg
+        collectionButton.toolTipText = state.strings.collection
+        collectionButton.isEnabled = state.sourceText.isNotBlank()
         moreButton.text = if (detailsExpanded) state.strings.less else state.strings.more
         originalLabel.text = state.strings.original
         editHintLabel.text = state.strings.editHint
@@ -803,6 +808,19 @@ class QuickTranslateDialog(
         pinButton.addActionListener { onPinToggled() }
         listenButton.addActionListener { onListen() }
         copyButton.addActionListener { onCopy(); showCopyFeedback() }
+        favoriteButton.addActionListener { onFavoriteToggled() }
+        collectionButton.addActionListener {
+            val state = currentState ?: return@addActionListener
+            JPopupMenu().apply {
+                state.collections.forEach { choice ->
+                    add(JCheckBoxMenuItem(choice.name, choice.included).apply { addActionListener { onCollectionToggled(choice.id) } })
+                }
+                if (state.collections.isNotEmpty()) addSeparator()
+                add(JMenuItem(state.strings.newCollection).apply { addActionListener { onNewCollection() } })
+                add(JMenuItem(state.strings.manageCollections).apply { addActionListener { onManageCollections() } })
+                show(collectionButton, 0, collectionButton.height)
+            }
+        }
         moreButton.addActionListener { toggleDetails() }
         val actions = JPanel(FlowLayout(FlowLayout.LEFT, 7, 0)).apply {
             isOpaque = false
