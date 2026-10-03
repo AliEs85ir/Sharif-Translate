@@ -82,6 +82,22 @@ val packagingJava = javaToolchains.launcherFor {
     languageVersion.set(JavaLanguageVersion.of(21))
 }
 
+// Refresh an existing portable installation without deleting its user data.
+tasks.register("refreshWindowsApp") {
+    group = "distribution"
+    description = "Update the JAR in an existing Windows image (close the app first)"
+    dependsOn(tasks.shadowJar)
+    val sourceJar = tasks.shadowJar.flatMap { it.archiveFile }
+    val targetJar = layout.buildDirectory.file("windows/Sharif Translate/app/SharifTranslate.jar")
+    val launcher = layout.buildDirectory.file("windows/Sharif Translate/Sharif Translate.exe")
+    doLast {
+        check(launcher.get().asFile.isFile) {
+            "Create the portable installation first with :app:windowsImage"
+        }
+        sourceJar.get().asFile.copyTo(targetJar.get().asFile, overwrite = true)
+    }
+}
+
 val windowsImage = tasks.register<Exec>("windowsImage") {
     group = "distribution"
     description = "Build a portable Windows x64 application with Java 21 included"
