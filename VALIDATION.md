@@ -32,3 +32,19 @@ Run the explicit Windows desktop smoke test from the repository root:
 ```
 
 The smoke test opens temporary test windows and sends keyboard/mouse input. Its captured log is in `app/build/validation/shortcut-smoke.log`.
+
+
+## Full system audit — final verification, 2026-10-03
+
+See [SYSTEM_AUDIT.md](SYSTEM_AUDIT.md) for fixes, topic commits, reproduction commands,
+evidence and unverified scope. The expanded suite has 51 tests with no failures/errors/skips.
+The final Windows distribution passed live Google/Bing and controlled AI protocol/error
+checks, persistence checks, and real Swing UI flows at 100/125/150/200% application scale.
+All three layouts, eight settings pages and principal dialogs were opened in English/light
+and Persian/dark configurations. The 48 supplied PNG resources match their original files
+and packaged copies. The external-process shortcut/popup test passed with an idle desktop;
+interfered runs are documented separately. The native EXE launched and displayed a successful
+live translation, including recovery through Google's fallback endpoint.
+
+Real remote AI provider credentials and physical multi-monitor DPI/audio hardware remain
+outside the verified scope. This supersedes earlier test counts above.
