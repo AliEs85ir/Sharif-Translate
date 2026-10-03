@@ -185,7 +185,12 @@ suspend fun buildDependencies(
         logger           = loggerFactory.getLogger("ThemeManager")
     )
 
-    val iconManager = IconManager(pluginManager)
+    val iconManager = IconManager(
+        pluginManager = pluginManager,
+        appDataDirectory = appData,
+        themeManager = themeManager,
+        logger = loggerFactory.getLogger("IconManager")
+    )
 
     // ---- 6. Active service resolution ----
 

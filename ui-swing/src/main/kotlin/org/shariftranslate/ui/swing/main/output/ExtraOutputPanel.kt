@@ -54,7 +54,7 @@ class ExtraOutputPanel(
         }
     }
 
-    private val gearBtn = createButtonWithIcon(iconManager, "icons/lucide/settings.svg", 16).apply {
+    private val gearBtn = createButtonWithIcon(iconManager, "icons/ui/settings.svg", 16).apply {
         buttonType = FlatButton.ButtonType.toolBarButton
         isFocusable = false
         isVisible = false

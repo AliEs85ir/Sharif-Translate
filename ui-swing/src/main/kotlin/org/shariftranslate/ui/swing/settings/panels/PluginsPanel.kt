@@ -218,7 +218,7 @@ class PluginsPanel(
         val headerIcon: Icon = if (pluginIconPath != null && serviceId != null)
             iconManager.getIcon(serviceId, pluginIconPath, 24, 24)
         else
-            iconManager.getIcon("icons/lucide/package.svg", 24, 24)
+            iconManager.getIcon("icons/ui/package.svg", 24, 24)
 
         val nameLabel = JLabel(plugin.manifest.name).apply {
             font = font.deriveFont(Font.BOLD, font.size + 2f)
@@ -337,7 +337,7 @@ class PluginsPanel(
                 insets = Insets(6, 0, 6, 0)
             }
             val pkgIcon = runCatching {
-                iconManager.getIcon("icons/lucide/package.svg", 36, 36)
+                iconManager.getIcon("icons/ui/package.svg", 36, 36)
             }.getOrNull()
             if (pkgIcon != null) add(JLabel(pkgIcon), gbc)
             add(JLabel(localizationManager.getString("settings_plugins.empty_selection_hint")).apply {
@@ -558,7 +558,7 @@ class PluginsPanel(
                 plugin.services.firstOrNull()?.id?.let { svc ->
                     iconManager.getIcon(svc, path, 15, 15)
                 }
-            } ?: iconManager.getIcon("icons/lucide/package.svg", 15, 15)
+            } ?: iconManager.getIcon("icons/ui/package.svg", 15, 15)
 
             val nameLabel = JLabel(plugin.manifest.name, icon, SwingConstants.LEADING).apply {
                 font        = font.deriveFont(Font.BOLD)

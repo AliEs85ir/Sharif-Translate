@@ -1,13 +1,14 @@
 package org.shariftranslate.ui.swing.dictionary
 
 import org.shariftranslate.ui.swing.shared.util.fitToScreen
+import org.shariftranslate.ui.swing.shared.icon.IconManager
 import org.shariftranslate.core.main.domain.model.ServiceInfo
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.Frame
 import javax.swing.*
 
-class DictionaryDialog(owner: Frame) : JDialog(owner, false) {
+class DictionaryDialog(owner: Frame, private val iconManager: IconManager) : JDialog(owner, false) {
 
     private var state: DictionaryDialogState? = null
     private var updatingFromState = false
@@ -16,7 +17,7 @@ class DictionaryDialog(owner: Frame) : JDialog(owner, false) {
     private val lookupButton = JButton()
     private val closeButton = JButton()
     private val collectionButton = JButton("Collections")
-    private val favoriteButton = JButton("☆")
+    private val favoriteButton = JToggleButton(iconManager.getIcon("icons/ui/star.svg", 16, 16))
 
     private val hintLabel = JLabel("", SwingConstants.CENTER).apply {
         foreground = UIManager.getColor("Label.disabledForeground")
@@ -98,7 +99,7 @@ class DictionaryDialog(owner: Frame) : JDialog(owner, false) {
         lookupButton.text = newState.lookupButtonLabel
         closeButton.text = newState.closeLabel
         collectionButton.text = newState.collectionLabel
-        favoriteButton.text = if (newState.isFavorite) "★" else "☆"
+        favoriteButton.isSelected = newState.isFavorite
         favoriteButton.toolTipText = newState.favoriteLabel
         favoriteButton.isEnabled = newState.lookedUpWord.isNotBlank()
         loadingLabel.text = newState.loadingMessage

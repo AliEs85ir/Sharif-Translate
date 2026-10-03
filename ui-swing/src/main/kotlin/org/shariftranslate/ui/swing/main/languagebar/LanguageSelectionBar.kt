@@ -24,12 +24,12 @@ class LanguageSelectionBar(
     private val onCancel: () -> Unit = {}
 ) : JPanel(GridBagLayout()), Renderable<LanguageSelectionBarState> {
 
-    private val clearButton = createButtonWithIcon(iconManager, "icons/lucide/trash.svg", 16)
+    private val clearButton = createButtonWithIcon(iconManager, "icons/ui/trash.svg", 16)
     private val sourceLanguageComboBox = LanguageComboBox(
         onLanguageSelected = { lang -> onSourceLanguageSelected(lang) },
         localizer = localizer
     )
-    private val swapButton = createButtonWithIcon(iconManager, "icons/lucide/swap.svg", 16)
+    private val swapButton = createButtonWithIcon(iconManager, "icons/ui/swap.svg", 16)
     private val targetLanguageComboBox = LanguageComboBox(
         onLanguageSelected = { lang -> onTargetLanguageSelected(lang) },
         localizer = localizer

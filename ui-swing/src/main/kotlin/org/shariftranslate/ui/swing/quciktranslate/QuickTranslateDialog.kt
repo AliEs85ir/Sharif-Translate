@@ -65,19 +65,19 @@ class QuickTranslateDialog(
     private var detailsExpanded = false
     private val sourceButton = popupButton()
     private val targetButton = popupButton()
-    private val swapButton = popupButton("icons/lucide/swap.svg", "icons/lucide/swap.svg")
+    private val swapButton = popupButton("icons/ui/swap.svg")
     private val translatorComboBox = TranslatorPopupButton(iconManager) { id ->
         editDebounceTimer?.stop()
         onTranslatorSelected(id)
     }
 
-    private val pinButton = popupButton("icons/custom/pin.png", "icons/lucide/pin.svg")
-    private val listenButton = popupButton("icons/custom/speaker.png", "icons/lucide/volume.svg")
-    private val copyButton = popupButton("icons/custom/copy.png", "icons/lucide/copy-text.svg")
+    private val pinButton = popupButton("icons/ui/pin.svg")
+    private val listenButton = popupButton("icons/ui/volume.svg")
+    private val copyButton = popupButton("icons/ui/copy-text.svg")
     private val normalCopyIcon = copyButton.icon
-    private val closeButton = popupButton("icons/custom/close.png", "icons/lucide/close.svg")
-    private val favoriteButton = popupButton("icons/custom/star.png", "icons/lucide/check.svg")
-    private val collectionButton = popupButton("icons/custom/collection.png", "icons/lucide/book-open.svg")
+    private val closeButton = popupButton("icons/ui/close.svg")
+    private val favoriteButton = popupButton("icons/ui/star.svg")
+    private val collectionButton = popupButton("icons/ui/collection.svg")
     private val moreButton = popupButton()
     private val originalLabel = JLabel()
     private val editHintLabel = JLabel()
@@ -571,8 +571,8 @@ class QuickTranslateDialog(
     private fun showCopyFeedback() {
         copyFeedbackTimer?.stop()
 
-        val checkIcon = iconManager.getIcon("icons/lucide/check.svg", 13, 13)
-        copyButton.icon = (checkIcon as? FlatSVGIcon)?.applyForegroundColorFilter() ?: checkIcon
+        val checkIcon = iconManager.getIcon("icons/ui/check.svg", 13, 13)
+        copyButton.icon = checkIcon
         copyButton.foreground = UIManager.getColor("Button.successForeground") ?: Color(34, 197, 94)
 
         copyFeedbackTimer = Timer(COPY_FEEDBACK_DURATION_MS) {
@@ -585,7 +585,7 @@ class QuickTranslateDialog(
         }
     }
 
-    private fun popupButton(iconPath: String? = null, darkFallback: String? = null): JButton {
+    private fun popupButton(iconPath: String? = null): JButton {
         val base = UIManager.getColor("Panel.background") ?: Color.WHITE
         val hover = UIManager.getColor("Button.hoverBackground") ?: Color(230, 239, 255)
         return JButton().apply {
@@ -595,15 +595,7 @@ class QuickTranslateDialog(
             putClientProperty(FlatClientProperties.STYLE, "arc: 999; borderWidth: 1; focusWidth: 0")
             background = base
             if (iconPath != null) {
-                val path = when {
-                    FlatSVGIcon.isDarkLaf() && iconPath.startsWith("icons/custom/") ->
-                        iconPath.replace("icons/custom/", "icons/custom/dark/")
-                    FlatSVGIcon.isDarkLaf() && darkFallback != null -> darkFallback
-                    else -> iconPath
-                }
-                icon = iconManager.getIcon(path, 19, 19).let {
-                    if (it is FlatSVGIcon) it.applyForegroundColorFilter() else it
-                }
+                icon = iconManager.getIcon(iconPath, 19, 19)
             }
             addMouseListener(object : MouseAdapter() {
                 private var animation: Timer? = null

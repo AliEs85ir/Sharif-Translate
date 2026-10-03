@@ -37,7 +37,7 @@ class StatusBar(
         isOpaque = false
     }
 
-    private val notificationButton = createButtonWithIcon(iconManager, "icons/lucide/notification.svg", 14).apply {
+    private val notificationButton = createButtonWithIcon(iconManager, "icons/ui/notification.svg", 14).apply {
         putClientProperty("JButton.buttonType", "toolBarButton")
         isFocusable = false
         addActionListener { onNotificationsClicked() }

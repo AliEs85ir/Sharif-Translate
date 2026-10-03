@@ -82,7 +82,7 @@ class MainAppFrame(
     private val updateDialog by lazy { UpdateDialog(this) }
     private val historyDialog by lazy { HistoryDialog(this) }
     private val collectionsDialog by lazy { CollectionsDialog(this, collectionRepository, appScope, localizer) }
-    private val dictionaryDialog by lazy { DictionaryDialog(this) }
+    private val dictionaryDialog by lazy { DictionaryDialog(this, iconManager) }
     private val loadingIndicator by lazy { LoadingIndicator(this) }
 
     private val notificationPopover by lazy {
@@ -1151,7 +1151,7 @@ class MainAppFrame(
     }
 
     private fun setupMenuBar() {
-        val settingsButton = createButtonWithIcon(iconManager, "icons/lucide/settings.svg", 18).apply {
+        val settingsButton = createButtonWithIcon(iconManager, "icons/ui/settings.svg", 18).apply {
             buttonType = FlatButton.ButtonType.toolBarButton
             toolTipText = localizer.getString("main_window_main_menu.settings")
             addActionListener {

@@ -55,21 +55,21 @@ class QuickDictionaryDialog(
     private val titleLabel = JLabel("").apply {
         putClientProperty("FlatLaf.styleClass", "h4")
     }
-    private val pinButton = createButtonWithIcon(iconManager, "icons/lucide/pin.svg", 14)
-    private val closeButton = createButtonWithIcon(iconManager, "icons/lucide/close.svg", 16)
-    private val collectionButton = createButtonWithIcon(iconManager, "icons/lucide/book-open.svg", 16).apply {
+    private val pinButton = createButtonWithIcon(iconManager, "icons/ui/pin.svg", 14)
+    private val closeButton = createButtonWithIcon(iconManager, "icons/ui/close.svg", 16)
+    private val collectionButton = createButtonWithIcon(iconManager, "icons/ui/book-open.svg", 16).apply {
         addActionListener { currentState?.let { state -> state.onSaveToCollection(searchField.text.trim()) } }
     }
-    private val favoriteButton = JButton("☆").apply {
+    private val favoriteButton = JToggleButton(iconManager.getIcon("icons/ui/star.svg", 16, 16)).apply {
         putClientProperty("JButton.buttonType", "toolBarButton")
         addActionListener { currentState?.let { state -> state.onToggleFavorite(state.lookedUpWord) } }
     }
 
     // Auto-source cycling button — mirrors DictionaryPanel
     private val activeLinkIcon: FlatSVGIcon =
-        (iconManager.getIcon("icons/lucide/link-2.svg", 13, 13) as FlatSVGIcon).applyForegroundColorFilter()
+        iconManager.getIcon("icons/ui/link-2.svg", 13, 13) as FlatSVGIcon
     private val offUnlinkIcon: FlatSVGIcon =
-        (iconManager.getIcon("icons/lucide/unlink.svg", 13, 13) as FlatSVGIcon).apply {
+        (iconManager.getIcon("icons/ui/unlink.svg", 13, 13) as FlatSVGIcon).apply {
             colorFilter = FlatSVGIcon.ColorFilter { UIManager.getColor("Label.disabledForeground") }
         }
     private val autoSourceButton = JButton().apply {
@@ -218,7 +218,7 @@ class QuickDictionaryDialog(
         pinButton.toolTipText = if (state.isPinned) state.strings.unpinTooltip else state.strings.pinTooltip
         closeButton.toolTipText = state.strings.closeTooltip
         collectionButton.toolTipText = state.strings.collectionLabel
-        favoriteButton.text = if (state.isFavorite) "★" else "☆"
+        favoriteButton.isSelected = state.isFavorite
         favoriteButton.toolTipText = state.strings.favoriteLabel
         favoriteButton.isEnabled = state.lookedUpWord.isNotBlank()
 

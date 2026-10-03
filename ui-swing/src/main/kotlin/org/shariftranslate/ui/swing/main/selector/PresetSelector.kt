@@ -31,7 +31,7 @@ class PresetSelector(
         isOpaque = false
         presetComboBox.renderer = PresetRenderer()
 
-        settingsButton = JButton(iconManager.getIcon("icons/lucide/settings.svg", 18, 18)).apply {
+        settingsButton = JButton(iconManager.getIcon("icons/ui/settings.svg", 18, 18)).apply {
             toolTipText = localizationManager.getString("preset_selector.manage_tooltip")
             isFocusable = false
             putClientProperty("JButton.buttonType", "toolBarButton")

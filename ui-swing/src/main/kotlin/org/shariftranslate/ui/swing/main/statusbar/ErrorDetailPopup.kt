@@ -58,7 +58,7 @@ class ErrorDetailPopup(private val iconManager: IconManager) {
         font = UIManager.getFont("Label.font")?.deriveFont(Font.BOLD) ?: font?.deriveFont(Font.BOLD)
     }
 
-    private val closeButton = createButtonWithIcon(iconManager, "icons/lucide/close.svg", 14).apply {
+    private val closeButton = createButtonWithIcon(iconManager, "icons/ui/close.svg", 14).apply {
         putClientProperty("JButton.buttonType", "toolBarButton")
         isFocusable = false
         addMouseListener(object : MouseAdapter() {

@@ -2,7 +2,6 @@ package org.shariftranslate.ui.swing.settings
 
 import org.shariftranslate.ui.swing.shared.util.fitToScreen
 
-import com.formdev.flatlaf.extras.FlatSVGIcon
 import org.shariftranslate.api.plugin.NotificationType
 import com.github.michaelbull.result.getError
 import org.shariftranslate.core.localization.LocalizationManager
@@ -69,22 +68,18 @@ class SettingsDialog(
     /** SVG resource paths keyed by localized nav label. */
     // @formatter:off
     private val sidebarIconPaths: Map<String, String> = mapOf(
-        localizationManager.getString("settings_dialog_sidebar.general")       to "icons/lucide/sliders-horizontal.svg",
-        localizationManager.getString("settings_dialog_sidebar.appearance")    to "icons/lucide/palette.svg",
-        localizationManager.getString("settings_dialog_sidebar.services")      to "icons/lucide/zap.svg",
-        localizationManager.getString("settings_dialog_sidebar.plugins")       to "icons/lucide/package.svg",
-        localizationManager.getString("settings_dialog_sidebar.hotkeys")       to "icons/lucide/keyboard.svg",
-        localizationManager.getString("settings_dialog_sidebar.translation")   to "icons/lucide/languages.svg",
-        localizationManager.getString("settings_dialog_sidebar.languages")     to "icons/lucide/globe.svg",
-        localizationManager.getString("settings_dialog_sidebar.window_layout") to "icons/lucide/layout-dashboard.svg"
+        localizationManager.getString("settings_dialog_sidebar.general")       to "icons/ui/sliders-horizontal.svg",
+        localizationManager.getString("settings_dialog_sidebar.appearance")    to "icons/ui/palette.svg",
+        localizationManager.getString("settings_dialog_sidebar.services")      to "icons/ui/zap.svg",
+        localizationManager.getString("settings_dialog_sidebar.plugins")       to "icons/ui/package.svg",
+        localizationManager.getString("settings_dialog_sidebar.hotkeys")       to "icons/ui/keyboard.svg",
+        localizationManager.getString("settings_dialog_sidebar.translation")   to "icons/ui/languages.svg",
+        localizationManager.getString("settings_dialog_sidebar.languages")     to "icons/ui/globe.svg",
+        localizationManager.getString("settings_dialog_sidebar.window_layout") to "icons/ui/layout-dashboard.svg"
     )
     // @formatter:on
 
-    /**
-     * Theme-aware sidebar icons: 14 × 14 [FlatSVGIcon] with a [FlatSVGIcon.ColorFilter]
-     * that remaps every SVG color to `Label.disabledForeground` at paint time, so icons
-     * always match the active FlatLaf theme without any manual update.
-     */
+    /** Sidebar icons use the same editable catalog and theme colors as the rest of the UI. */
     private val sidebarIcons: Map<String, Icon> by lazy {
         sidebarIconPaths.mapNotNull { (name, path) ->
             runCatching {
@@ -286,7 +281,7 @@ class SettingsDialog(
             AppearancePanel(settingsStore, themeManager, localizationManager, scope)
 
         localizationManager.getString("settings_dialog_sidebar.services") ->
-            ServicesPanel(settingsStore, pluginManager, localizationManager, scope)
+            ServicesPanel(settingsStore, pluginManager, iconManager, localizationManager, scope)
 
         localizationManager.getString("settings_dialog_sidebar.plugins") ->
             PluginsPanel(iconManager, pluginManager, localizationManager, scope)

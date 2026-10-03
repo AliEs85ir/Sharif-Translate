@@ -1,6 +1,5 @@
 package org.shariftranslate.ui.swing.settings.panels
 
-import com.formdev.flatlaf.extras.FlatSVGIcon
 import org.shariftranslate.api.plugin.Service
 import org.shariftranslate.core.localization.LocalizationManager
 import org.shariftranslate.core.plugin.PluginManager
@@ -10,6 +9,7 @@ import org.shariftranslate.core.settings.mvi.SettingsState
 import org.shariftranslate.core.settings.mvi.SettingsStore
 import org.shariftranslate.core.shared.arch.ServiceType
 import org.shariftranslate.core.shared.util.type
+import org.shariftranslate.ui.swing.shared.icon.IconManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.awt.*
@@ -18,6 +18,7 @@ import javax.swing.*
 class ServicesPanel(
     private val store: SettingsStore,
     private val pluginManager: PluginManager,
+    private val iconManager: IconManager,
     private val localizationManager: LocalizationManager,
     private val scope: CoroutineScope
 ) : SettingsPanel() {
@@ -121,26 +122,18 @@ class ServicesPanel(
             }
         }
 
-    /**
-     * Loads a theme-aware 14×14 icon for [type] using [FlatSVGIcon] with a [FlatSVGIcon.ColorFilter]
-     * that remaps all SVG colors to `Label.disabledForeground` at paint time.
-     */
+    /** Loads the shared, configurable 14×14 interface icon for a service type. */
     private fun serviceIcon(type: ServiceType): Icon? {
         val path = when (type) {
-            ServiceType.TRANSLATOR -> "icons/lucide/languages.svg"
-            ServiceType.TTS -> "icons/lucide/volume.svg"
-            ServiceType.OCR -> "icons/lucide/scan-text.svg"
-            ServiceType.SPELL_CHECKER -> "icons/lucide/check.svg"
-            ServiceType.DICTIONARY -> "icons/lucide/book-open.svg"
-            ServiceType.SUMMARIZER -> "icons/lucide/text-align-start.svg"
-            ServiceType.REWRITER -> "icons/lucide/pen-line.svg"
+            ServiceType.TRANSLATOR -> "icons/ui/languages.svg"
+            ServiceType.TTS -> "icons/ui/volume.svg"
+            ServiceType.OCR -> "icons/ui/scan-text.svg"
+            ServiceType.SPELL_CHECKER -> "icons/ui/check.svg"
+            ServiceType.DICTIONARY -> "icons/ui/book-open.svg"
+            ServiceType.SUMMARIZER -> "icons/ui/text-align-start.svg"
+            ServiceType.REWRITER -> "icons/ui/pen-line.svg"
         }
-        org.shariftranslate.ui.swing.shared.icon.SuppliedIcons.find(path, 14, 14)?.let { return it }
-        return runCatching {
-            val icon = FlatSVGIcon(path, 14, 14, javaClass.classLoader)
-            icon.colorFilter = FlatSVGIcon.ColorFilter { UIManager.getColor("Label.disabledForeground") ?: Color.GRAY }
-            icon as Icon
-        }.getOrNull()
+        return iconManager.getIcon(path, 14, 14)
     }
 
     private fun serviceLabel(type: ServiceType): String = when (type) {

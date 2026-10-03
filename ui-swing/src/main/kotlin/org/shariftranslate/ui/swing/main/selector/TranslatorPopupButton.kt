@@ -20,7 +20,7 @@ class TranslatorPopupButton(
     }
 
     private var currentState: TranslatorSelectorState? = null
-    private val arrowIcon: Icon = UIManager.getIcon("Table.descendingSortIcon")
+    private val arrowIcon: Icon = iconManager.getIcon("icons/ui/arrow-down.svg", 14, 14)
 
     private val actionButton = JButton().apply {
         isFocusable = false

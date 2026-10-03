@@ -1,7 +1,5 @@
 package org.shariftranslate.ui.swing.shared.util
 
-import com.formdev.flatlaf.extras.FlatSVGIcon
-import com.formdev.flatlaf.extras.FlatSVGIcon.ColorFilter
 import com.formdev.flatlaf.extras.components.FlatButton
 import com.formdev.flatlaf.util.SystemInfo
 import org.shariftranslate.api.ocr.ImageData
@@ -32,19 +30,10 @@ fun getVirtualScreenBounds(): Rectangle {
 fun createButtonWithIcon(iconManager: IconManager, iconPath: String, size: Int): FlatButton {
     val icon = iconManager.getIcon(iconPath, size, size)
     return FlatButton().apply {
-        this.icon = (icon as? FlatSVGIcon)?.applyForegroundColorFilter() ?: icon
+        this.icon = icon
         toolTipText = ""
     }
 }
-
-fun FlatSVGIcon.applyForegroundColorFilter(): FlatSVGIcon {
-    return apply {
-        colorFilter = ColorFilter { _: Color? ->
-            if (FlatSVGIcon.isDarkLaf()) UIManager.getColor("MenuItem.foreground") else Color(0, 0, 0, 190)
-        }
-    }
-}
-
 
 fun singleKey(key: Int): KeyStroke = KeyStroke.getKeyStroke(key, 0)
 fun controlKeyWith(key: Int): KeyStroke = KeyStroke.getKeyStroke(key, Toolkit.getDefaultToolkit().menuShortcutKeyMaskEx)
