@@ -135,6 +135,7 @@ class ServicesPanel(
             ServiceType.SUMMARIZER -> "icons/lucide/text-align-start.svg"
             ServiceType.REWRITER -> "icons/lucide/pen-line.svg"
         }
+        org.shariftranslate.ui.swing.shared.icon.SuppliedIcons.find(path, 14, 14)?.let { return it }
         return runCatching {
             val icon = FlatSVGIcon(path, 14, 14, javaClass.classLoader)
             icon.colorFilter = FlatSVGIcon.ColorFilter { UIManager.getColor("Label.disabledForeground") ?: Color.GRAY }

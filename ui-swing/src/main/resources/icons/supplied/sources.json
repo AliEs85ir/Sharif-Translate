@@ -1,0 +1,242 @@
+[
+  {
+    "resource": "light/arrow-left.png",
+    "source": "E:\\Save Fotage\\Icon\\my icon\\PNG\\Linear\\Light Linear(96px)\\Left Arrow 1.png",
+    "sha256": "34e1224f8d9a6976d7c3800129c5b18cddd9bfe5092492fc12594bd893bde3c4"
+  },
+  {
+    "resource": "light/arrow-right.png",
+    "source": "E:\\Save Fotage\\Icon\\my icon\\PNG\\Linear\\Light Linear(96px)\\Right Arrow 1.png",
+    "sha256": "5c07286e88062e891c62f434867af6eded5b2d5e1842bd779f0194e748854d3f"
+  },
+  {
+    "resource": "light/check.png",
+    "source": "E:\\Save Fotage\\Icon\\my icon\\PNG\\Linear\\Light Linear(96px)\\Checked.png",
+    "sha256": "62d9555bd40440a7ba9d2b0ffa13afbce8c19418da5e06d3829765d82a11538c"
+  },
+  {
+    "resource": "light/close.png",
+    "source": "E:\\Save Fotage\\Icon\\my icon\\PNG\\Linear\\Light Linear(96px)\\Close.png",
+    "sha256": "7ef2d4978e339b4703333e7564e30932a63f530b4f82b63ef86c3d009d919ca9"
+  },
+  {
+    "resource": "light/copy-text.png",
+    "source": "E:\\Save Fotage\\Icon\\my icon\\PNG\\Linear\\Light Linear(96px)\\Copy.png",
+    "sha256": "46927f67c6b9d487f209873edc31ca70750c0e5324587c8188455f2958ea7536"
+  },
+  {
+    "resource": "light/globe.png",
+    "source": "E:\\Save Fotage\\Icon\\my icon\\PNG\\Linear\\Light Linear(96px)\\Website.png",
+    "sha256": "c3bae533990bf44b129fdc6e7dd8a64f77984dc2313f5baad0c7a73006d47cc3"
+  },
+  {
+    "resource": "light/keyboard.png",
+    "source": "E:\\Save Fotage\\Icon\\my icon\\PNG\\Linear\\Light Linear(96px)\\Keyboard.png",
+    "sha256": "04de555212bd165e5dd8df1093fdc9960f052c17d5a1611876ffcbc13921e7f5"
+  },
+  {
+    "resource": "light/layout-dashboard.png",
+    "source": "E:\\Save Fotage\\Icon\\my icon\\PNG\\Linear\\Light Linear(96px)\\Display.png",
+    "sha256": "2c7429c055e30095c676402212cee81bb47ab9e9158ad3eb82c9533024f5d7c4"
+  },
+  {
+    "resource": "light/notification.png",
+    "source": "E:\\Save Fotage\\Icon\\my icon\\PNG\\Linear\\Light Linear(96px)\\Notification 1.png",
+    "sha256": "c05466e3d8b88a01691fd0dcbae646b6bafd6ebe977f025dde2f95b007cec621"
+  },
+  {
+    "resource": "light/package.png",
+    "source": "E:\\Save Fotage\\Icon\\my icon\\PNG\\Linear\\Light Linear(96px)\\Chip.png",
+    "sha256": "79548ff46da79b03537b05590db14c5c7d57003bf20eac9155c053bd246d27bb"
+  },
+  {
+    "resource": "light/palette.png",
+    "source": "E:\\Save Fotage\\Icon\\my icon\\PNG\\Linear\\Light Linear(96px)\\Palette.png",
+    "sha256": "f765256ce99457a45714b3ae3aed7ff76973bc99792878aa3349e636303a64b7"
+  },
+  {
+    "resource": "light/pen-line.png",
+    "source": "E:\\Save Fotage\\Icon\\my icon\\PNG\\Linear\\Light Linear(96px)\\Edit.png",
+    "sha256": "3df3fee04601c44a5dec309a2b58b3624fdb38fd73a2e92c7365952258970f16"
+  },
+  {
+    "resource": "light/pin.png",
+    "source": "E:\\Save Fotage\\Icon\\my icon\\PNG\\Linear\\Light Linear(96px)\\Pin.png",
+    "sha256": "dfd4d156cc9a0cf743be0dd6f754401f9e0b57b5bd6cd80b7a0792178651a1e7"
+  },
+  {
+    "resource": "light/scan-text.png",
+    "source": "E:\\Save Fotage\\Icon\\my icon\\PNG\\Linear\\Light Linear(96px)\\Scanning 1.png",
+    "sha256": "63fd8dc453d97f704638a92c30a02bbaaba10904709f9495ab5ab6de12bd57be"
+  },
+  {
+    "resource": "light/settings.png",
+    "source": "E:\\Save Fotage\\Icon\\my icon\\PNG\\Linear\\Light Linear(96px)\\Settings.png",
+    "sha256": "8ce1543b59012e1ede87e43ef7e418961e6e1e6343800710b86afe9a3361e13a"
+  },
+  {
+    "resource": "light/sliders-horizontal.png",
+    "source": "E:\\Save Fotage\\Icon\\my icon\\PNG\\Linear\\Light Linear(96px)\\Equalizer Settings.png",
+    "sha256": "c6c1a2e2de0b1f520337bca66bbab2e667989c3c0e82e3cac11013c10e9f5e5a"
+  },
+  {
+    "resource": "light/swap.png",
+    "source": "E:\\Save Fotage\\Icon\\my icon\\PNG\\Linear\\Light Linear(96px)\\Left Right 1.png",
+    "sha256": "0ea5a4abbe412dda6ca3a529aeab6fd54c6db6192f95f60f76beb8382827f187"
+  },
+  {
+    "resource": "light/text-align-start.png",
+    "source": "E:\\Save Fotage\\Icon\\my icon\\PNG\\Linear\\Light Linear(96px)\\Align left.png",
+    "sha256": "cde8da247ba6f92e7ad033a7ffd49b19d0705cf64cce53317d6da78ead65464e"
+  },
+  {
+    "resource": "light/trash.png",
+    "source": "E:\\Save Fotage\\Icon\\my icon\\PNG\\Linear\\Light Linear(96px)\\Delete.png",
+    "sha256": "76543e0b54f245a1890105be0865b2fde6b68337605f48176c16ae08af2026b2"
+  },
+  {
+    "resource": "light/volume.png",
+    "source": "E:\\Save Fotage\\Icon\\my icon\\PNG\\Linear\\Light Linear(96px)\\Speaker.png",
+    "sha256": "dca48ad9fee718522989819ec16b0efa65ec73890b38f2694e4e185a586d06e8"
+  },
+  {
+    "resource": "light/zap.png",
+    "source": "E:\\Save Fotage\\Icon\\my icon\\PNG\\Linear\\Light Linear(96px)\\Flash.png",
+    "sha256": "794d4f7efe386daa2dda398def1c8cffffed19fe227a386dc81c0a72c0f2e054"
+  },
+  {
+    "resource": "light/book-open.png",
+    "source": "E:\\Save Fotage\\Icon\\my icon\\PNG\\Linear\\Light Linear(96px)\\Education.png",
+    "sha256": "437c9c83e74eebf68d34ed16325034e4ad5db47c18e3d4c0c5ee1386e3418841"
+  },
+  {
+    "resource": "light/star.png",
+    "source": "E:\\Save Fotage\\Icon\\my icon\\PNG\\Linear\\Light Linear(96px)\\Star.png",
+    "sha256": "c5feccc43a4f8dc0af339749f84dd5848112940e634c19d12111f1f27c61c0db"
+  },
+  {
+    "resource": "light/collection.png",
+    "source": "E:\\Save Fotage\\Icon\\my icon\\PNG\\Linear\\Light Linear(96px)\\Folder 1.png",
+    "sha256": "6bd1499b3ae24c61b36f4579083bc3867e5c4e6a072d0af249f42d91b3128a67"
+  },
+  {
+    "resource": "dark/arrow-left.png",
+    "source": "E:\\Save Fotage\\Icon\\my icon\\PNG\\Linear\\Dark Linear(96px)\\Left Arrow 1.png",
+    "sha256": "6cf3f3b0084651caf14bfcef8cab3dcfb39b988dd16ed13e194773a441a33615"
+  },
+  {
+    "resource": "dark/arrow-right.png",
+    "source": "E:\\Save Fotage\\Icon\\my icon\\PNG\\Linear\\Dark Linear(96px)\\Right Arrow 1.png",
+    "sha256": "a7a516a20cf060c0e4e37949d3f69837acaa3d0499962a18374834e5d441d206"
+  },
+  {
+    "resource": "dark/check.png",
+    "source": "E:\\Save Fotage\\Icon\\my icon\\PNG\\Linear\\Dark Linear(96px)\\Checked.png",
+    "sha256": "b5711f057919b4f57155cd8e792c0b741523565680cc4764c0ee733d2b6f8cc8"
+  },
+  {
+    "resource": "dark/close.png",
+    "source": "E:\\Save Fotage\\Icon\\my icon\\PNG\\Linear\\Dark Linear(96px)\\Close.png",
+    "sha256": "b76a254d14938021607e7d58c208655c27dec8786e746e6d3b7a58cd0a87cada"
+  },
+  {
+    "resource": "dark/copy-text.png",
+    "source": "E:\\Save Fotage\\Icon\\my icon\\PNG\\Linear\\Dark Linear(96px)\\Copy.png",
+    "sha256": "3efc787dd58ca56b3cac6728a650f21de0097c11840dd03a040b0deee0d5d75d"
+  },
+  {
+    "resource": "dark/globe.png",
+    "source": "E:\\Save Fotage\\Icon\\my icon\\PNG\\Linear\\Dark Linear(96px)\\Website.png",
+    "sha256": "e964adfa344e5800162f89b72e49a6ed8e6464532615c3c863e2f85be505d888"
+  },
+  {
+    "resource": "dark/keyboard.png",
+    "source": "E:\\Save Fotage\\Icon\\my icon\\PNG\\Linear\\Dark Linear(96px)\\Keyboard.png",
+    "sha256": "f37069d2e4d5594299fe70207cb231a9fa4d92f4395e0bded0528954f8ae1ecc"
+  },
+  {
+    "resource": "dark/layout-dashboard.png",
+    "source": "E:\\Save Fotage\\Icon\\my icon\\PNG\\Linear\\Dark Linear(96px)\\Display.png",
+    "sha256": "dc7f891cd5d4f6815aa64469b4f2ff6213e89d7e5d7e30a8bf50060a3275f6f4"
+  },
+  {
+    "resource": "dark/notification.png",
+    "source": "E:\\Save Fotage\\Icon\\my icon\\PNG\\Linear\\Dark Linear(96px)\\Notification 1.png",
+    "sha256": "93a7874b1ad32a6e3335ad934b20607752446a016703e1fd0774c1200c28c30b"
+  },
+  {
+    "resource": "dark/package.png",
+    "source": "E:\\Save Fotage\\Icon\\my icon\\PNG\\Linear\\Dark Linear(96px)\\Chip.png",
+    "sha256": "d1b13afe38cc220846210c758bade51fddfbea1d82a8ce97e79f60d9ec6335f6"
+  },
+  {
+    "resource": "dark/palette.png",
+    "source": "E:\\Save Fotage\\Icon\\my icon\\PNG\\Linear\\Dark Linear(96px)\\Palette.png",
+    "sha256": "01c9c5b59bce73a3740b11e98f02a4936d0de0e57114492326d5ff0220d46b18"
+  },
+  {
+    "resource": "dark/pen-line.png",
+    "source": "E:\\Save Fotage\\Icon\\my icon\\PNG\\Linear\\Dark Linear(96px)\\Edit.png",
+    "sha256": "eb6640d5c50f8abadc4e1b03077ce9b98b80e13b65caef4a9c935b0423ef22f3"
+  },
+  {
+    "resource": "dark/pin.png",
+    "source": "E:\\Save Fotage\\Icon\\my icon\\PNG\\Linear\\Dark Linear(96px)\\Pin.png",
+    "sha256": "70ecf477d1e16f545f29aa7ebb3191732540dcbdb634103bd71f65524d372ffe"
+  },
+  {
+    "resource": "dark/scan-text.png",
+    "source": "E:\\Save Fotage\\Icon\\my icon\\PNG\\Linear\\Dark Linear(96px)\\Scanning 1.png",
+    "sha256": "fce86f226f07d9eb9737ba45ca381d74a733c994461bb413fad87c49987e9769"
+  },
+  {
+    "resource": "dark/settings.png",
+    "source": "E:\\Save Fotage\\Icon\\my icon\\PNG\\Linear\\Dark Linear(96px)\\Settings.png",
+    "sha256": "58cb5feb9bc10db109f3e8e243850987fc355fc70c9f01d50cc71efa1a0adb02"
+  },
+  {
+    "resource": "dark/sliders-horizontal.png",
+    "source": "E:\\Save Fotage\\Icon\\my icon\\PNG\\Linear\\Dark Linear(96px)\\Equalizer Settings.png",
+    "sha256": "9b77cfbcb490b8624fb53e67693e4f5b45376fdc65d4cb964077e9ef783863ec"
+  },
+  {
+    "resource": "dark/swap.png",
+    "source": "E:\\Save Fotage\\Icon\\my icon\\PNG\\Linear\\Dark Linear(96px)\\Left Right 1.png",
+    "sha256": "434de7c76f2bfd7c025e224fc0e2328f475069c317570ee6f6f1e2ca1b9ef1ec"
+  },
+  {
+    "resource": "dark/text-align-start.png",
+    "source": "E:\\Save Fotage\\Icon\\my icon\\PNG\\Linear\\Dark Linear(96px)\\Align left.png",
+    "sha256": "ff0697e95539f9fa720a2109f9fa961d859e09fd12fb942ef160c1953fb2fa6d"
+  },
+  {
+    "resource": "dark/trash.png",
+    "source": "E:\\Save Fotage\\Icon\\my icon\\PNG\\Linear\\Dark Linear(96px)\\Delete.png",
+    "sha256": "e76b9b00a5254c8f7cb175baca421c92bd64ed8e3c441857de33cfba9684d9cd"
+  },
+  {
+    "resource": "dark/volume.png",
+    "source": "E:\\Save Fotage\\Icon\\my icon\\PNG\\Linear\\Dark Linear(96px)\\Speaker.png",
+    "sha256": "c9dc0cbcb24dc19cdf807648b1657e9e4ee3d2eb34de5f3afdfb5366a59582b9"
+  },
+  {
+    "resource": "dark/zap.png",
+    "source": "E:\\Save Fotage\\Icon\\my icon\\PNG\\Linear\\Dark Linear(96px)\\Flash.png",
+    "sha256": "d311e30c8a57c5781a6f67544c3dfd65a00805c944a2c4a1e9952afedbb25e19"
+  },
+  {
+    "resource": "dark/book-open.png",
+    "source": "E:\\Save Fotage\\Icon\\my icon\\PNG\\Linear\\Dark Linear(96px)\\Education.png",
+    "sha256": "4c3fc3c9812e362e64c8e0957c3de3484563988811165c59ba81255df9997fe6"
+  },
+  {
+    "resource": "dark/star.png",
+    "source": "E:\\Save Fotage\\Icon\\my icon\\PNG\\Linear\\Dark Linear(96px)\\Star.png",
+    "sha256": "1cba6807eb55627b184058ee8493d90d1c2e2b38c5685c79199320148c79cb0d"
+  },
+  {
+    "resource": "dark/collection.png",
+    "source": "E:\\Save Fotage\\Icon\\my icon\\PNG\\Linear\\Dark Linear(96px)\\Folder 1.png",
+    "sha256": "b54c9ba569b201baa4d5fb24f30f5b0a44d95cbf4eb906b48031eba8e39435fd"
+  }
+]

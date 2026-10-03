@@ -218,9 +218,7 @@ class PluginsPanel(
         val headerIcon: Icon = if (pluginIconPath != null && serviceId != null)
             iconManager.getIcon(serviceId, pluginIconPath, 24, 24)
         else
-            FlatSVGIcon("icons/lucide/package.svg", 24, 24, javaClass.classLoader).apply {
-                colorFilter = FlatSVGIcon.ColorFilter { UIManager.getColor("Label.foreground") }
-            }
+            iconManager.getIcon("icons/lucide/package.svg", 24, 24)
 
         val nameLabel = JLabel(plugin.manifest.name).apply {
             font = font.deriveFont(Font.BOLD, font.size + 2f)
@@ -339,9 +337,7 @@ class PluginsPanel(
                 insets = Insets(6, 0, 6, 0)
             }
             val pkgIcon = runCatching {
-                val ico = FlatSVGIcon("icons/lucide/package.svg", 36, 36, javaClass.classLoader)
-                ico.colorFilter = FlatSVGIcon.ColorFilter { UIManager.getColor("Label.disabledForeground") ?: Color.GRAY }
-                ico as Icon
+                iconManager.getIcon("icons/lucide/package.svg", 36, 36)
             }.getOrNull()
             if (pkgIcon != null) add(JLabel(pkgIcon), gbc)
             add(JLabel(localizationManager.getString("settings_plugins.empty_selection_hint")).apply {
@@ -562,9 +558,7 @@ class PluginsPanel(
                 plugin.services.firstOrNull()?.id?.let { svc ->
                     iconManager.getIcon(svc, path, 15, 15)
                 }
-            } ?: FlatSVGIcon("icons/lucide/package.svg", 15, 15, javaClass.classLoader).apply {
-                colorFilter = FlatSVGIcon.ColorFilter { UIManager.getColor("Label.foreground") }
-            }
+            } ?: iconManager.getIcon("icons/lucide/package.svg", 15, 15)
 
             val nameLabel = JLabel(plugin.manifest.name, icon, SwingConstants.LEADING).apply {
                 font        = font.deriveFont(Font.BOLD)

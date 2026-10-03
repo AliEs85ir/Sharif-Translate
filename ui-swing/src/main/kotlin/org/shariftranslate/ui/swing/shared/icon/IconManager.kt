@@ -9,12 +9,12 @@ import javax.swing.ImageIcon
 
 class IconManager(private val pluginManager: PluginManager) {
 
-    private val iconCache = mutableMapOf<String, Icon>()
+    private val iconCache = java.util.concurrent.ConcurrentHashMap<String, Icon>()
 
     fun getIcon(path: String, width: Int, height: Int): Icon {
         val cacheKey = "app:$path:$width:$height"
         return iconCache.getOrPut(cacheKey) {
-            createIcon(path, width, height, this::class.java.classLoader)
+            SuppliedIcons.find(path, width, height) ?: createIcon(path, width, height, this::class.java.classLoader)
         }
     }
 
@@ -37,6 +37,7 @@ class IconManager(private val pluginManager: PluginManager) {
     }
 
     private fun loadSvgIcon(path: String, width: Int, height: Int, loader: ClassLoader): Icon {
+        if (loader.getResource(path) == null) return getMissingIcon(width, height)
         val icon = FlatSVGIcon(path, width, height, loader)
         return if (icon.iconWidth > 0) icon else getMissingIcon(width, height)
     }

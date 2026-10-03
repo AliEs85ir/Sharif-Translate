@@ -572,7 +572,7 @@ class QuickTranslateDialog(
         copyFeedbackTimer?.stop()
 
         val checkIcon = iconManager.getIcon("icons/lucide/check.svg", 13, 13)
-        copyButton.icon = (checkIcon as FlatSVGIcon).applyForegroundColorFilter()
+        copyButton.icon = (checkIcon as? FlatSVGIcon)?.applyForegroundColorFilter() ?: checkIcon
         copyButton.foreground = UIManager.getColor("Button.successForeground") ?: Color(34, 197, 94)
 
         copyFeedbackTimer = Timer(COPY_FEEDBACK_DURATION_MS) {

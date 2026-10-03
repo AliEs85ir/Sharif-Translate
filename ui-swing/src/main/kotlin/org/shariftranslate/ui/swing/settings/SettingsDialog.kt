@@ -88,10 +88,7 @@ class SettingsDialog(
     private val sidebarIcons: Map<String, Icon> by lazy {
         sidebarIconPaths.mapNotNull { (name, path) ->
             runCatching {
-                val icon = FlatSVGIcon(path, 14, 14, javaClass.classLoader)
-                icon.colorFilter =
-                    FlatSVGIcon.ColorFilter { UIManager.getColor("Label.disabledForeground") ?: Color.GRAY }
-                name to (icon as Icon)
+                name to iconManager.getIcon(path, 14, 14)
             }.getOrNull()
         }.toMap()
     }
