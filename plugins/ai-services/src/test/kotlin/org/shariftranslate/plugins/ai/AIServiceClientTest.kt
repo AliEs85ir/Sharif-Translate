@@ -88,4 +88,30 @@ class AIServiceClientTest {
             assertIs<ServiceError.InvalidInputError>(client.complete("translate", "test").getError())
         } finally { http.close(); context.scope.cancel() }
     }
+    @Test fun concurrentRequestsKeepTheirOwnResponsesAndRecoverAfterCancellation(): Unit = runBlocking {
+        val server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0)
+        val workers = java.util.concurrent.Executors.newCachedThreadPool()
+        server.executor = workers
+        val entered = CompletableDeferred<Unit>()
+        server.createContext("/v1/chat/completions") { exchange ->
+            val body = Json.parseToJsonElement(exchange.requestBody.bufferedReader().readText()).jsonObject
+            val text = body["messages"]!!.jsonArray[1].jsonObject["content"]!!.jsonPrimitive.content
+            if (text == "slow") { entered.complete(Unit); Thread.sleep(300) }
+            val response = buildJsonObject { putJsonArray("choices") { add(buildJsonObject { putJsonObject("message") { put("content", text) } }) } }.toString().toByteArray()
+            runCatching { exchange.sendResponseHeaders(200, response.size.toLong()); exchange.responseBody.use { it.write(response) } }
+        }
+        server.start()
+        val http = KtorHttpClient(context)
+        val client = AIServiceClient(context, http) { AISettings(baseUrl = "http://127.0.0.1:${server.address.port}/v1", customHeaders = "") }
+        try {
+            val slow = async { client.complete("echo", "slow") }
+            withTimeout(3000) { entered.await() }
+            slow.cancel()
+            assertFailsWith<CancellationException> { slow.await() }
+            val results = (1..8).map { index -> async { client.complete("echo", "متن $index 😀").get() } }.awaitAll()
+            assertEquals((1..8).map { "متن $it 😀" }, results)
+            assertEquals("recovered", client.complete("echo", "recovered").get())
+        } finally { http.close(); server.stop(0); workers.shutdownNow(); context.scope.cancel() }
+    }
+
 }
