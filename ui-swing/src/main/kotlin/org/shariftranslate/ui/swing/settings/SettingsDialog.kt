@@ -264,6 +264,7 @@ class SettingsDialog(
             horizontalScrollBarPolicy = JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED
             verticalScrollBarPolicy = JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED
             verticalScrollBar.unitIncrement = 16
+            applyComponentOrientation(this@SettingsDialog.componentOrientation)
         }, BorderLayout.CENTER)
 
         contentArea.revalidate()

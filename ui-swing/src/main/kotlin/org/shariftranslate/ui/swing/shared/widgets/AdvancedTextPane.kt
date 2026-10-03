@@ -509,6 +509,12 @@ class AdvancedTextPane(
     // Orientation
     // -----------------------------------------------------------------------
 
+    // UI chrome may be RTL while the document is English (or vice versa).
+    override fun applyComponentOrientation(orientation: ComponentOrientation) {
+        val content = document?.let { it.getText(0, it.length) }.orEmpty()
+        super.applyComponentOrientation(if (content.isRTL()) ComponentOrientation.RIGHT_TO_LEFT else ComponentOrientation.LEFT_TO_RIGHT)
+    }
+
     private fun updateOrientation(isRtlNow: Boolean) {
         if (isRtlNow == isTextRtl) return
         componentOrientation = if (isRtlNow) ComponentOrientation.RIGHT_TO_LEFT else ComponentOrientation.LEFT_TO_RIGHT

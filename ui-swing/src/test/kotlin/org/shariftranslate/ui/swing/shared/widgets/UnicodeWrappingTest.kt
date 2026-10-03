@@ -13,4 +13,16 @@ class UnicodeWrappingTest {
         assertEquals(0, safeTextBreak("", 0))
         assertEquals(3, safeTextBreak("abc", 10))
     }
+    @Test fun documentDirectionSurvivesOppositeInterfaceOrientation() {
+        javax.swing.SwingUtilities.invokeAndWait {
+            val pane = AdvancedTextPane({}, {}, {})
+            pane.render("Hello world", emptyList(), true)
+            pane.applyComponentOrientation(java.awt.ComponentOrientation.RIGHT_TO_LEFT)
+            assertEquals(true, pane.componentOrientation.isLeftToRight)
+            pane.render("سلام دنیا", emptyList(), true)
+            pane.applyComponentOrientation(java.awt.ComponentOrientation.LEFT_TO_RIGHT)
+            assertEquals(false, pane.componentOrientation.isLeftToRight)
+        }
+    }
+
 }
