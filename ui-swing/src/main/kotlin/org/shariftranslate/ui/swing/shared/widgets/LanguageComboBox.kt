@@ -73,7 +73,7 @@ class LanguageComboBox(
         autoDetectedLanguage: LanguageCode?,
         isEnabled: Boolean
     ) {
-        SwingUtilities.invokeLater {
+        val applyState = Runnable {
             isRendering = true
             putClientProperty("autoDetectedLanguage", autoDetectedLanguage)
 
@@ -92,6 +92,7 @@ class LanguageComboBox(
             this.isEnabled = isEnabled
             isRendering = false
         }
+        if (SwingUtilities.isEventDispatchThread()) applyState.run() else SwingUtilities.invokeLater(applyState)
     }
 
     private class LanguageRenderer(

@@ -31,7 +31,6 @@ class TranslationHistoryBar(
         isOpaque = false
         add(backwardButton)
         add(forwardButton)
-        add(statusLabel)
     }
 
     private val rightGroup = JPanel(FlowLayout(FlowLayout.TRAILING, 2, 0)).apply {
@@ -46,6 +45,7 @@ class TranslationHistoryBar(
         imageTranslateButton.addActionListener { onImageTranslate() }
 
         add(leftGroup, BorderLayout.LINE_START)
+        add(statusLabel, BorderLayout.CENTER)
         add(rightGroup, BorderLayout.LINE_END)
     }
 
@@ -69,6 +69,7 @@ class TranslationHistoryBar(
 
     override fun render(state: TranslationHistoryBarState) {
         statusLabel.text = state.statusText
+        statusLabel.toolTipText = state.statusText
 
         backwardButton.isEnabled = !state.isLoading && state.canGoBackward
         forwardButton.isEnabled = !state.isLoading && state.canGoForward

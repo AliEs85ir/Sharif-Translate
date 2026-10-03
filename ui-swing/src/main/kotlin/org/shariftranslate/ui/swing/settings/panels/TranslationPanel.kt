@@ -169,10 +169,9 @@ class TranslationPanel(
         ButtonGroup().apply { add(useTranslated); add(useInput) }
 
         val radioPanel = JPanel().apply {
-            layout   = BoxLayout(this, BoxLayout.Y_AXIS)
+            layout = java.awt.GridLayout(0, 1, 0, 4)
             isOpaque = false
             add(useTranslated)
-            add(Box.createVerticalStrut(4))
             add(useInput)
         }
         gb.nextRow().add(JLabel(localizationManager.getString("settings_translation.extra_output_source")))
