@@ -4,6 +4,8 @@ import org.shariftranslate.api.core.Logger
 import org.shariftranslate.api.language.LanguageCode
 import org.shariftranslate.api.plugin.*
 import org.shariftranslate.api.translator.*
+import org.shariftranslate.api.ocr.*
+import org.shariftranslate.api.spellchecker.*
 import org.shariftranslate.core.history.HistoryRepository
 import org.shariftranslate.core.main.domain.usecase.*
 import org.shariftranslate.core.main.mvi.MainState
@@ -178,6 +180,43 @@ class TranslationValidationTest {
             fixture.translate("second")
             assertEquals(history, fixture.state.value.history)
             assertEquals(history, fixture.history.loadHistory())
+        } finally { fixture.scope.cancel() }
+    }
+
+    @Test fun ocrAndSpellExceptionsAreRecoverableButCancellationPropagates(): Unit = runBlocking {
+        val fixture = Fixture(null)
+        var cancel = false
+        val ocr = object : OCR {
+            override val id = "google-ocr"
+            override val name = "OCR"
+            override val version = "1"
+            override val iconPath: String? = null
+            override val supportedLanguages = SupportedLanguages.All
+            override suspend fun extractText(request: OCRRequest): Result<OCRResponse, ServiceError> {
+                if (cancel) throw CancellationException("cancel")
+                error("OCR exception")
+            }
+        }
+        val spell = object : SpellChecker {
+            override val id = "google-spell-checker"
+            override val name = "Spell"
+            override val version = "1"
+            override val iconPath: String? = null
+            override val supportedLanguages = SupportedLanguages.All
+            override suspend fun check(request: SpellCheckRequest): Result<SpellCheckResponse, ServiceError> {
+                if (cancel) throw CancellationException("cancel")
+                error("Spell exception")
+            }
+        }
+        fixture.services.value = mapOf(ocr.id to ocr, spell.id to spell)
+        val ocrCase = OcrAndTranslateUseCase(fixture.manager, logFactory)
+        val spellCase = PerformSpellCheckUseCase(fixture.manager, logFactory)
+        try {
+            assertEquals("", ocrCase(ImageData(byteArrayOf(1), "png", 1, 1), fixture.state.value) { _, _, _ -> })
+            assertTrue(spellCase(fixture.state.value, "hello") { _, _, _ -> }.isEmpty())
+            cancel = true
+            assertFailsWith<CancellationException> { ocrCase(ImageData(byteArrayOf(1), "png", 1, 1), fixture.state.value) { _, _, _ -> } }
+            assertFailsWith<CancellationException> { spellCase(fixture.state.value, "hello") { _, _, _ -> } }
         } finally { fixture.scope.cancel() }
     }
 
