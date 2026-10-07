@@ -9,9 +9,13 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+---
+
+## [0.1.0] — 2026-10-08 (initial preview)
+
 - Connected the independent AliEs85ir/Sharif-Translate repository and aligned CI, contributor guidance, ownership, and private security reporting.
-- Prepared Windows package verification and an explicit tag-triggered release workflow.
-- Aligned development version 1.3.0 across UI, executable metadata, and ZIP packaging.
+- Added a Windows x64 portable package with bundled runtime and official plugins.
+- Aligned preview version 0.1.0 across UI, executable metadata, ZIP, and tag.
 - Preserved history timestamps when serializing newly saved entries.
 
 ---

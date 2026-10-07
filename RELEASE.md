@@ -9,13 +9,13 @@ A GitHub Release is not required for development. The only permanent branch is `
 3. Open the ZIP from `app/build/distributions/`. Confirm it contains the EXE, bundled runtime, bundled plugin JARs, languages, themes, wiki, README and LICENSE. Confirm it contains no settings, history, collections, credentials, logs, or private keys.
 4. Run the EXE from the extracted ZIP using a fresh data directory. Check the icon, version, translation, speech, dictionary, settings persistence, and bundled plugin loading. AI cloud behavior requires a user-supplied key and model; never bundle a developer key.
 5. Confirm the version shown in the UI and Windows metadata matches the ZIP filename and prospective tag `vX.Y.Z`. Review the public attribution and preserved MIT/third-party notices.
-6. Push tag `vX.Y.Z` only when ready to publish. The tag triggers `.github/workflows/release.yml`; it builds and publishes a GitHub Release with the Windows ZIP. Verify the Release assets and checksum before enabling update checks in the app.
+6. Push tag `vX.Y.Z` only when ready to publish. The tag triggers `.github/workflows/release.yml`; it builds and publishes a GitHub Release with the Windows ZIP. Verify the Release assets and checksum. The initial `v0.1.0` Release is marked as a prerelease.
 
 For a packaging rehearsal without a release, run the Release workflow manually from GitHub Actions on `main`. It uploads a temporary workflow Artifact and does not publish a Release.
 
 ## Update source
 
-The updater uses GitHub's latest release endpoint. Leave automatic update checks off until the first tested Release exists. After publication, configure `shariftranslate.update.owner=AliEs85ir` and `shariftranslate.update.repository=Sharif-Translate` in the JVM launch options, then test both the no-update and new-update paths.
+The updater uses GitHub's latest release endpoint. Automatic update checks remain off by default. The updater reads GitHub's latest stable release and will not see the `v0.1.0` prerelease. Once a stable release is published, configure `shariftranslate.update.owner=AliEs85ir` and `shariftranslate.update.repository=Sharif-Translate` in the JVM launch options, then test both the no-update and new-update paths.
 
 ## API and plugin distribution
 

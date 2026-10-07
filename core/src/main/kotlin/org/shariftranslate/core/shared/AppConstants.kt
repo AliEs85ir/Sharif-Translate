@@ -15,7 +15,7 @@ object AppConstants {
      * Used by [org.shariftranslate.core.main.domain.usecase.CheckForUpdatesUseCase]
      * to compare against the latest release.
      */
-    const val APP_VERSION = "1.3.0"
+    const val APP_VERSION = "0.1.0"
 
     // ============================================================
     // Timing
