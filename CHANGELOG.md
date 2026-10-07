@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to QTranslate are documented here.
+Historical release notes for the original application are retained below. New releases belong to Sharif Translate.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versions follow [Semantic Versioning](https://semver.org/).
@@ -121,8 +121,3 @@ Versions follow [Semantic Versioning](https://semver.org/).
 - Portable mode — all app data lives next to the JAR; works from any folder
 
 ---
-
-[Unreleased]: https://github.com/ahatem/QTranslate/compare/v1.2.0...HEAD
-[1.2.0]: https://github.com/ahatem/QTranslate/compare/v1.1.0...v1.2.0
-[1.1.0]: https://github.com/ahatem/QTranslate/compare/v1.0.0...v1.1.0
-[1.0.0]: https://github.com/ahatem/QTranslate/releases/tag/v1.0.0
