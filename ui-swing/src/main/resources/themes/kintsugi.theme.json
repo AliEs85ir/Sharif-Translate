@@ -1,7 +1,7 @@
 {
   "name": "Kintsugi Dark",
   "dark": true,
-  "author": "Ahmed Hatem",
+  "author": "AliEs85ir (Ali Esameili | Sharif comp)",
   "ui": {
     "*": {
       "background": "$panelBackground",

@@ -1,5 +1,7 @@
 # Sharif Translate
 
+Developed and maintained by **AliEs85ir (Ali Esameili | Sharif comp)**.
+
 ![Application icon](docs/images/app-icon.png)
 
 Independent desktop translation application with Google, Bing and configurable AI services, OCR, speech, dictionaries, history, collections, themes and multilingual UI.
@@ -38,4 +40,6 @@ See [architecture](wiki/Architecture.md), [plugin development](wiki/Creating-a-P
 
 ## Attribution
 
-Derived from QTranslate by Ahmed Hatem. Original MIT copyright and third-party licenses are retained in [LICENSE](LICENSE) and bundled resources. Attribution is historical and does not configure a remote, update source or external service.
+Sharif Translate is the independently named and maintained project developed by AliEs85ir (Ali Esameili | Sharif comp), who is responsible for its completion, enhancements, and ongoing development under the Sharif Translate identity.
+
+The original application codebase was written by Ahmed Hatem as QTranslate. Sharif Translate builds on that foundation; AliEs85ir holds the rights to their own contributions and modifications, while the rights to the original code remain with its respective copyright holder. The original MIT copyright notice and applicable third-party license notices are retained in [LICENSE](LICENSE) and bundled resources. This attribution records the project's origin and does not configure a remote, update source, or external service.
