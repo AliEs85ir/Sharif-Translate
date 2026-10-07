@@ -4,6 +4,7 @@ import org.shariftranslate.api.plugin.PluginContext
 import org.shariftranslate.api.plugin.ServiceError
 import org.shariftranslate.api.plugin.SupportedLanguages
 import org.shariftranslate.api.spellchecker.*
+import org.shariftranslate.plugins.common.textChunks
 import org.shariftranslate.plugins.common.ApiConfig
 import org.shariftranslate.plugins.common.KtorHttpClient
 import org.shariftranslate.plugins.common.createJsonParser
@@ -12,7 +13,6 @@ import com.github.difflib.patch.DeltaType
 import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.coroutines.coroutineBinding
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 
 class BingSpellCheckerService(
@@ -20,12 +20,13 @@ class BingSpellCheckerService(
     private val httpClient: KtorHttpClient,
     private val authManager: BingAuthManager,
     private val languageMapper: BingLanguageMapper,
-    private val apiConfig: ApiConfig
+    private val apiConfig: ApiConfig,
+    private val endpoint: String = "https://www.bing.com/tspellcheckv3"
 ) : SpellChecker {
 
     override val id: String = "bing-spell-checker"
     override val name: String = "Bing Spell Checker"
-    override val version: String = "1.0.0"
+    override val version: String = "1.1.0"
 
     override val supportedLanguages: SupportedLanguages
         get() = SupportedLanguages.Specific(languageMapper.spellCheckLanguageCodes.toSet())
@@ -51,11 +52,10 @@ class BingSpellCheckerService(
             val language = languageMapper.toProviderCode(request.language)
             val chunks = partitionText(request.text)
 
-            val correctedChunks = chunks
-                .map { chunk -> async { checkChunk(chunk, language, auth) } }
-                .awaitAll()
-
-            val correctedText = correctedChunks.joinToString(" ").trim()
+            val correctedChunks = chunks.map { chunk ->
+                if (chunk.isBlank()) chunk else checkChunk(chunk, language, auth).bind()
+            }
+            val correctedText = correctedChunks.joinToString("")
             SpellCheckResponse(
                 correctedText = correctedText,
                 corrections = generateCorrections(original = request.text, correctedText)
@@ -75,7 +75,7 @@ class BingSpellCheckerService(
         )
 
         val responseString = httpClient.postForm(
-            url = SPELLCHECK_URL,
+            url = endpoint,
             headers = apiConfig.createHeaders(),
             formData = formData,
             queryParams = mapOf(
@@ -91,66 +91,24 @@ class BingSpellCheckerService(
         response.correctedText.ifEmpty { text }
     }
 
-    private fun partitionText(text: String): List<String> =
-        text.split(Regex("\\s+"))
-            .fold(mutableListOf("")) { acc, word ->
-                when {
-                    acc.last().isEmpty() -> acc.apply { this[lastIndex] = word }
-                    (acc.last() + " " + word).length > MAX_CHUNK_LENGTH -> acc.apply { add(word) }
-                    else -> acc.apply { this[lastIndex] = "${this[lastIndex]} $word" }
-                }
-            }
-            .filter { it.isNotBlank() }
+    private fun partitionText(text: String): List<String> = textChunks(text, MAX_CHUNK_LENGTH)
 
     fun generateCorrections(original: String, corrected: String): List<Correction> {
-        val corrections = mutableListOf<Correction>()
-        val origWords = original.split(" ").toList()
-        val corrWords = corrected.split(" ").toList()
-        val patch = DiffUtils.diff(origWords, corrWords)
-
-        for (delta in patch.deltas) {
-            when (delta.type) {
-                DeltaType.CHANGE -> {
-                    val origText = delta.source.lines.joinToString(" ")
-                    val corrText = delta.target.lines.joinToString(" ")
-                    val position = findPhrasePosition(original, origText)
-                    if (position != -1) {
-                        corrections.add(
-                            Correction(
-                                original = origText,
-                                startIndex = position,
-                                endIndex = position + origText.length,
-                                suggestions = listOf(corrText),
-                                type = CorrectionType.SPELLING
-                            )
-                        )
-                    }
-                }
-
-                DeltaType.DELETE -> {
-                    val origText = delta.source.lines.joinToString(" ")
-                    val position = findPhrasePosition(original, origText)
-                    if (position != -1) {
-                        corrections.add(
-                            Correction(
-                                original = origText,
-                                startIndex = position,
-                                endIndex = position + origText.length,
-                                suggestions = emptyList(),
-                                type = CorrectionType.SPELLING
-                            )
-                        )
-                    }
-                }
-
-                else -> {
-                    // INSERT delta — no original span to map to, nothing to record
-                }
-            }
-        }
-
-        return corrections
+        val originalWords = Regex("\\S+").findAll(original).toList()
+        val correctedWords = Regex("\\S+").findAll(corrected).toList()
+        val patch = DiffUtils.diff(originalWords.map { it.value }, correctedWords.map { it.value })
+        return patch.deltas.mapNotNull { delta ->
+            if (delta.type != DeltaType.CHANGE && delta.type != DeltaType.DELETE) return@mapNotNull null
+            val position = delta.source.position
+            val count = delta.source.lines.size
+            if (count == 0) return@mapNotNull null
+            val start = originalWords[position].range.first
+            val end = originalWords[position + count - 1].range.last + 1
+            Correction(
+                original = original.substring(start, end), startIndex = start, endIndex = end,
+                suggestions = if (delta.type == DeltaType.DELETE) emptyList() else listOf(delta.target.lines.joinToString(" ")),
+                type = CorrectionType.SPELLING
+            )
+        }.sortedBy { it.startIndex }
     }
-
-    private fun findPhrasePosition(text: String, phrase: String): Int = text.indexOf(phrase)
 }

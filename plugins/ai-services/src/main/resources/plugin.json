@@ -1,9 +1,9 @@
 {
   "id": "ai-plugin",
   "name": "AI Services",
-  "version": "2.0.0",
-  "author": "Ahmed Hatem",
-  "description": "Translation, Summarization, Rewriting, Spell Checking, Dictionary, and Vision OCR powered by any OpenAI-compatible endpoint. Defaults to OpenRouter (300+ models, one API key). Configurable base URL supports OpenAI, Gemini, Mistral, Ollama, and more.",
+  "version": "2.1.0",
+  "author": "Ali Esmaeili",
+  "description": "Translation, summarization, rewriting, spell checking, dictionary and vision OCR using an OpenAI-compatible endpoint and your own API key. Local compatible servers are also supported.",
   "minApiVersion": "1.0.0",
   "icon": "assets/ai-icon.svg"
 }

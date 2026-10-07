@@ -13,6 +13,9 @@ import org.shariftranslate.api.rewriter.RewriteRequest
 import org.shariftranslate.api.spellchecker.SpellChecker
 import org.shariftranslate.api.spellchecker.SpellCheckRequest
 import org.shariftranslate.api.ocr.*
+import org.shariftranslate.api.tts.*
+import java.io.ByteArrayInputStream
+import javazoom.jl.decoder.Bitstream
 import org.shariftranslate.core.collections.CollectionRepository
 import org.shariftranslate.core.main.mvi.*
 import org.shariftranslate.core.settings.data.*
@@ -26,6 +29,7 @@ import java.io.File
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
 import javax.imageio.ImageIO
+import org.shariftranslate.core.plugin.PluginStatus
 
 /** Run with the shipped runtime and SharifTranslate.jar on the classpath, never the source output. */
 fun main(args: Array<String>) = runBlocking {
@@ -35,6 +39,31 @@ fun main(args: Array<String>) = runBlocking {
     AppDataDirectory.installBundledResources(data)
     val logs = ConsoleLoggerFactory(ConsoleLoggerFactory.LogLevel.WARN)
     val repository = SettingsRepository(data, Json { ignoreUnknownKeys = true }, logs.getLogger("ValidationSettings"))
+    // Explicit maintenance mode: acknowledge only JARs identical to this local build.
+    if (endpoint == "accept-built-updates") {
+        val project = File(args[2]).canonicalFile
+        val expected = mapOf("google-services" to "google-services", "bing-services" to "bing-services", "ai-plugin" to "ai-services")
+        for (module in expected.values) {
+            val built = File(project, "plugins/$module/build/libs/$module-plugin.jar")
+            val installed = File(data, "plugins/$module-plugin.jar")
+            check(built.readBytes().contentEquals(installed.readBytes())) { "Installed $module differs from the trusted local build" }
+        }
+        val retained = File(data, "datastore").walkTopDown().filter { it.isFile && it.name != "plugin_registry.preferences_pb" }
+            .associate { it.relativeTo(data).path to it.readBytes() }
+        val deps = buildDependencies(data, logs, repository, repository.loadInitialConfiguration())
+        try {
+            deps.pluginManager.loadAndProcessPlugins()
+            check(deps.pluginManager.plugins.value.map { it.id }.toSet() == expected.keys)
+            for (plugin in deps.pluginManager.plugins.value) {
+                check(plugin.manifest.author == "Ali Esmaeili")
+                if (plugin.status == PluginStatus.AWAITING_VERIFICATION) deps.pluginManager.resolveAsUpdate(plugin.id)
+            }
+            check(deps.pluginManager.plugins.value.all { it.status == PluginStatus.ENABLED })
+        } finally { deps.pluginManager.shutdown(); deps.appScope.cancel() }
+        check(retained.all { (path, bytes) -> File(data, path).readBytes().contentEquals(bytes) })
+        println("PASS: trusted local plugin updates accepted through the public API; existing settings, keys, history and collections unchanged")
+        return@runBlocking
+    }
     val config = repository.loadInitialConfiguration().copy(
         autoCheckForUpdates = false, isSpellCheckingEnabled = false,
         preferredTargetLanguage = "fa", preferredSourceLanguage = "en", closeButtonBehavior = CloseButtonBehavior.EXIT,
@@ -77,6 +106,31 @@ fun main(args: Array<String>) = runBlocking {
             deps.mainStore.dispatch(MainIntent.RedoTranslation)
             check(!deps.mainStore.state.value.isLoading)
             println("PASS: translation history undo/redo")
+            val services = deps.pluginManager.activeServices.value
+            for (engine in listOf("google-spell-checker", "bing-spell-checker")) {
+                val text = "Hello.\r\n  This is a test.\n"
+                val result = (services[engine] as SpellChecker).check(SpellCheckRequest(text, LanguageCode.ENGLISH))
+                    .getOrElse { error("$engine: $it") }
+                check(result.correctedText.isNotBlank())
+                for (correction in result.corrections) {
+                    check(text.substring(correction.startIndex, correction.endIndex) == correction.original)
+                }
+                println("PASS: live $engine output=${result.correctedText.length}, corrections=${result.corrections.size}")
+            }
+            val dictionary = (services["google-dictionary"] as Dictionary)
+                .lookup(DictionaryRequest("hello", LanguageCode.ENGLISH)).getOrElse { error("Google dictionary: $it") }
+            check(dictionary.entries.any { it.definitions.isNotEmpty() })
+            println("PASS: live Google dictionary with definitions")
+            for (engine in listOf("google-tts", "bing-tts")) {
+                val audio = (services[engine] as TextToSpeech)
+                    .synthesize(TTSRequest.ByLanguage("Hello world.", LanguageCode.ENGLISH))
+                    .getOrElse { error("$engine: $it") }.audio as TTSAudio.Bytes
+                check(audio.data.isNotEmpty())
+                val stream = Bitstream(ByteArrayInputStream(audio.data))
+                try { check(stream.readFrame() != null) } finally { stream.close() }
+                println("PASS: live $engine returned valid MP3 (${audio.data.size} bytes)")
+            }
+
         }
         if (endpoint != null && endpoint != "prepare") {
             check(deps.pluginManager.applySettingsFromMap("ai-plugin", mapOf("baseUrl" to endpoint, "model" to "validation-model", "apiKey" to "", "customHeaders" to "")).isOk)

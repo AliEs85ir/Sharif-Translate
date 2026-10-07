@@ -44,7 +44,8 @@ class GoogleDictionaryService(
         coroutineBinding {
             val langTag = languageMapper.toProviderCode(request.language)
 
-            val responseString = httpClient.get(
+            val responseString = googleWebRequest(
+                httpClient = httpClient,
                 url = TRANSLATE_PRIMARY,
                 headers = apiConfig.createHeaders(),
                 queryParams = mapOf(

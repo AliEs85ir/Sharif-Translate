@@ -51,7 +51,7 @@ data class AISettings(
     @field:Setting(
         label       = "API Key",
         description = "Your API key for the selected endpoint. " +
-                "Get an OpenRouter key at openrouter.ai/keys. " +
+                "Requests use your own provider account and its limits. " +
                 "Leave blank for local Ollama.",
         type        = SettingType.PASSWORD,
         isRequired  = false,
@@ -62,17 +62,15 @@ data class AISettings(
 
     @field:Setting(
         label       = "Model",
-        description = "Model identifier. OpenRouter examples: google/gemini-flash-1.5-8b · openai/gpt-4o · " +
-                "anthropic/claude-3-5-sonnet · mistralai/mistral-small. " +
-                "Direct provider examples: gpt-4o · gemini-2.5-flash · mistral-small-latest. " +
-                "Append :free to use a free-tier model on OpenRouter, e.g. google/gemini-flash-1.5-8b:free.",
+        description = "Enter a model identifier supported by your chosen provider and account. " +
+                "Select a free model if you want to avoid provider charges; availability and limits depend on the provider.",
         type         = SettingType.TEXT,
-        defaultValue = "google/gemini-flash-1.5-8b",
+        defaultValue = "",
         isRequired   = true,
         group        = "model",
         order        = 10
     )
-    var model: String = "google/gemini-flash-1.5-8b",
+    var model: String = "",
 
     @field:Setting(
         label       = "Temperature",
@@ -105,7 +103,7 @@ data class AISettings(
     @field:Setting(
         label       = "Custom Headers (JSON)",
         description = "Optional extra HTTP headers sent with every request, as a JSON object. " +
-                "The defaults below add OpenRouter site-attribution headers (harmless with other providers). " +
+                "Authorization and transport headers are reserved; use API Key for bearer authentication. " +
                 "Leave blank to send no extra headers.",
         type         = SettingType.TEXTAREA,
         defaultValue = """{"X-Title": "Sharif Translate", "X-OpenRouter-Title": "Sharif Translate"}""",

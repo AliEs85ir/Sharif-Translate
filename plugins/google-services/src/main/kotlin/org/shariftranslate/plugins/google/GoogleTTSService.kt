@@ -9,6 +9,8 @@ import org.shariftranslate.api.tts.TTSAudio
 import org.shariftranslate.api.tts.TTSRequest
 import org.shariftranslate.api.tts.TTSResponse
 import org.shariftranslate.api.tts.TextToSpeech
+import java.io.ByteArrayOutputStream
+import org.shariftranslate.plugins.common.textChunks
 import org.shariftranslate.plugins.common.ApiConfig
 import org.shariftranslate.plugins.common.KtorHttpClient
 import org.shariftranslate.plugins.google.common.GoogleLanguageMapper
@@ -20,12 +22,13 @@ class GoogleTTSService(
     private val pluginContext: PluginContext,
     private val httpClient: KtorHttpClient,
     private val languageMapper: GoogleLanguageMapper,
-    private val apiConfig: ApiConfig
+    private val apiConfig: ApiConfig,
+    private val endpoint: String = "https://translate.googleapis.com/translate_tts"
 ) : TextToSpeech {
 
     override val id: String = "google-tts"
     override val name: String = "Google TTS"
-    override val version: String = "1.0.0"
+    override val version: String = "1.1.0"
     override val iconPath: String = "assets/google-translate-icon.svg"
 
     // Google TTS supports a dynamic language set — same source as the translator.
@@ -71,7 +74,7 @@ class GoogleTTSService(
         val audioChunks = mutableListOf<ByteArray>()
         for ((idx, chunk) in chunks.withIndex()) {
             val bytes = httpClient.getBytes(
-                url = TTS_ENDPOINT,
+                url = endpoint,
                 headers = apiConfig.createHeaders(),
                 queryParams = mapOf(
                     "client" to "gtx",
@@ -85,7 +88,7 @@ class GoogleTTSService(
             ).bind()
             audioChunks.add(bytes)
         }
-        audioChunks.reduce { acc, bytes -> acc + bytes }
+        ByteArrayOutputStream().also { out -> audioChunks.forEach { out.write(it) } }.toByteArray()
     }
 
     private suspend fun tryFallbackEndpoint(
@@ -96,7 +99,7 @@ class GoogleTTSService(
         val audioChunks = mutableListOf<ByteArray>()
         for (chunk in chunks) {
             val bytes = httpClient.getBytes(
-                url = TTS_ENDPOINT,
+                url = endpoint,
                 headers = apiConfig.createHeaders(),
                 queryParams = mapOf(
                     "client" to "tw-ob",
@@ -106,19 +109,9 @@ class GoogleTTSService(
             ).bind()
             audioChunks.add(bytes)
         }
-        audioChunks.reduce { acc, bytes -> acc + bytes }
+        ByteArrayOutputStream().also { out -> audioChunks.forEach { out.write(it) } }.toByteArray()
     }
 
     private fun partitionText(text: String): List<String> =
-        text.split("\\s+".toRegex())
-            .fold(mutableListOf("")) { acc, word ->
-                val current = acc.last()
-                if (("$current $word").length > MAX_CHUNK_LENGTH) {
-                    acc.add(word)
-                } else {
-                    acc[acc.lastIndex] = if (current.isEmpty()) word else "$current $word"
-                }
-                acc
-            }
-            .filter { it.isNotBlank() }
+        textChunks(text, MAX_CHUNK_LENGTH).filter { it.isNotBlank() }
 }

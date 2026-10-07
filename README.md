@@ -24,7 +24,7 @@ To update application code or UI icons in an existing Windows build, fully exit 
 & ".\app\build\windows\Sharif Translate\Sharif Translate.exe"
 ```
 
-`shadowJar` alone updates `app/build/libs/SharifTranslate.jar`; the EXE loads the separate JAR under `app/build/windows/Sharif Translate/app/`. `refreshWindowsApp` updates that copy while preserving settings and history. Use `windowsImage` for a complete rebuild including runtime and plugins; it replaces the generated installation directory.
+`shadowJar` alone updates `app/build/libs/SharifTranslate.jar`; the EXE loads the separate JAR under `app/build/windows/Sharif Translate/app/`. `refreshWindowsApp` updates that copy and all three bundled plugin JARs while preserving settings and history. A changed plugin fingerprint may require **Accept Update** in the Plugins page; this keeps the plugin settings. Use `windowsImage` for a complete rebuild including runtime and plugins; it replaces the generated installation directory.
 
 Icon settings are created on launch at `app/build/windows/Sharif Translate/icons/icons.json`, with a Persian text guide beside them. Restart the application after editing these settings.
 
@@ -33,6 +33,8 @@ Icon settings are created on launch at `app/build/windows/Sharif Translate/icons
 No upstream repository or update source is configured. Automatic update checks default to off. To use your own GitHub Releases, provide both JVM properties `shariftranslate.update.owner` and `shariftranslate.update.repository`. Manual checks report an unconfigured source without network access when either property is absent. Configure project contacts and maintainers in this repository when available.
 
 Google and Bing retain their translation endpoints. AI retains its configurable endpoint, credentials, models and custom headers; default headers identify Sharif Translate without an inherited repository URL. The plugin API namespace is `org.shariftranslate`; external plugins must be rebuilt for this API. Bundled plugins are built and packaged together.
+
+Bundled plugin maintenance is credited to **Ali Esmaeili**. See [plugin changes](plugins/CHANGES.md) and [plugin attribution](plugins/NOTICE.md). AI uses the user's own key and a user-selected model; new installations do not preselect a potentially unavailable model.
 
 The supplied logo and all generated icon sizes are in `ui-swing/src/main/resources/icons/app/`.
 

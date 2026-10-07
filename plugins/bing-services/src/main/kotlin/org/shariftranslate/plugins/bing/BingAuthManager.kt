@@ -4,98 +4,54 @@ import org.shariftranslate.api.plugin.PluginContext
 import org.shariftranslate.api.plugin.ServiceError
 import org.shariftranslate.plugins.common.ApiConfig
 import org.shariftranslate.plugins.common.KtorHttpClient
-import com.github.michaelbull.result.Err
-import com.github.michaelbull.result.Ok
-import com.github.michaelbull.result.Result
-import com.github.michaelbull.result.coroutines.coroutineBinding
-import com.github.michaelbull.result.getOr
-import com.github.michaelbull.result.getOrElse
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.jsonArray
-import java.util.concurrent.atomic.AtomicReference
-import kotlin.Boolean
-import kotlin.Long
-import kotlin.String
-import kotlin.fold
-import kotlin.let
-import kotlin.require
-import kotlin.runCatching
-import kotlin.time.Duration.Companion.hours
+import com.github.michaelbull.result.*
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.serialization.json.*
 
-/**
- * Thread-safe manager for Bing authentication tokens.
- * Tokens are automatically refreshed when expired (1 hour lifetime).
- */
+/** Shares one token refresh across translation, speech and spell-check requests. */
 class BingAuthManager(
     private val pluginContext: PluginContext,
-    private val httpClient: KtorHttpClient
+    private val httpClient: KtorHttpClient,
+    private val pageUrl: String = "https://www.bing.com/translator",
+    private val clock: () -> Long = System::currentTimeMillis
 ) {
-    private val authRef = AtomicReference<AuthState?>(null)
-    private val json = Json { ignoreUnknownKeys = true }
+    private val refreshMutex = Mutex()
+    private var cached: AuthState? = null
 
-    suspend fun getAuth(): Result<BingAuth, ServiceError> {
-        val current = authRef.get()
-
-        return when {
-            current != null && !current.isExpired() -> Ok(current.auth)
-            else -> refreshAuth()
-        }
+    suspend fun getAuth(): Result<BingAuth, ServiceError> = refreshMutex.withLock {
+        cached?.takeIf { clock() < it.expiresAt }?.let { return@withLock Ok(it.auth) }
+        pluginContext.logger.debug("Refreshing Bing authentication")
+        val html = httpClient.get(pageUrl, ApiConfig().createHeaders()).getOrElse { return@withLock Err(it) }
+        val parsed = parseBingAuth(html).getOrElse { return@withLock Err(it) }
+        cached = AuthState(parsed.auth, clock() + parsed.lifetimeMillis)
+        Ok(parsed.auth)
     }
 
-    private suspend fun refreshAuth(): Result<BingAuth, ServiceError> = coroutineBinding {
-        pluginContext.logger.info("Fetching new Bing authentication token")
+    private data class AuthState(val auth: BingAuth, val expiresAt: Long)
+}
 
-        val html = httpClient.get(
-            url = "https://www.bing.com/translator",
-            headers = ApiConfig().createHeaders()
-        ).bind()
+internal data class ParsedBingAuth(val auth: BingAuth, val lifetimeMillis: Long)
 
-        val auth = parseAuthFromHtml(html).bind()
-        authRef.set(AuthState(auth, System.currentTimeMillis()))
+/** Only reads page fields; never evaluates provider JavaScript. */
+internal fun parseBingAuth(html: String): Result<ParsedBingAuth, ServiceError> = try {
+    fun field(pattern: String, name: String): String =
+        Regex(pattern).find(html)?.groupValues?.get(1)?.takeIf { it.isNotBlank() }
+            ?: error("Missing Bing $name")
 
-        pluginContext.logger.info("Successfully obtained Bing authentication token")
-        auth
-    }
-
-    private fun parseAuthFromHtml(html: String): Result<BingAuth, ServiceError> {
-        val ig = extractPattern(html, """IG:"(.*?)"""", "IG").getOrElse { return Err(it) }
-        val iid = extractPattern(html, """data-iid="(.*?)"""", "IID").getOrElse { return Err(it) }
-        val helperInfo = extractPattern(html, """params_AbusePreventionHelper = (.*?);""", "helper info")
-            .getOrElse { return Err(it) }
-
-        // Extract additional authentication data
-        val muid = extractPattern(html, """muid":\s*"(.*?)"""", "MUID").getOr("")
-        val sid = extractPattern(html, """sid":\s*"(.*?)"""", "SID").getOr("")
-        val tid = extractPattern(html, """tid":\s*"(.*?)"""", "TID").getOr("")
-
-        return runCatching {
-            val jsonElement = json.parseToJsonElement(helperInfo)
-            val helperArray = jsonElement.jsonArray
-            require(helperArray.size >= 2) { "Invalid helper info format" }
-
-            BingAuth(
-                ig = ig,
-                iid = iid,
-                key = helperArray[0].toString(),
-                token = helperArray[1].toString().removeSurrounding("\""),
-                muid = muid,
-                sid = sid,
-                tid = tid
-            )
-        }.fold(
-            onSuccess = { Ok(it) },
-            onFailure = { Err(ServiceError.InvalidResponseError("Failed to parse auth data: ${it.message}", it)) }
-        )
-    }
-
-    private fun extractPattern(html: String, pattern: String, fieldName: String): Result<String, ServiceError> =
-        Regex(pattern).find(html)
-            ?.groupValues
-            ?.getOrNull(1)
-            ?.let { Ok(it) }
-            ?: Err(ServiceError.InvalidResponseError("Failed to extract $fieldName from Bing page", null))
-
-    private data class AuthState(val auth: BingAuth, val timestamp: Long) {
-        fun isExpired(): Boolean = (System.currentTimeMillis() - timestamp) >= 1.hours.inWholeMilliseconds
-    }
+    val ig = field("""\bIG\s*:\s*["']([^"']+)["']""", "IG")
+    val iid = field("""data-iid\s*=\s*["']([^"']+)["']""", "IID")
+    val helper = field("""params_AbusePreventionHelper\s*=\s*(\[[^;]*])\s*;""", "token data")
+    val values = Json.parseToJsonElement(helper).jsonArray
+    require(values.size >= 2) { "Incomplete Bing token data" }
+    val key = values[0].jsonPrimitive.content
+    val token = values[1].jsonPrimitive.content
+    require(key.isNotBlank() && key.all(Char::isDigit) && token.isNotBlank()) { "Invalid Bing token data" }
+    fun optional(name: String) = Regex("""["']$name["']\s*:\s*["']([^"']*)["']""")
+        .find(html)?.groupValues?.get(1).orEmpty()
+    val lifetime = values.getOrNull(2)?.jsonPrimitive?.longOrNull
+        ?.takeIf { it > 0 }?.coerceAtMost(3_600_000L) ?: 3_600_000L
+    Ok(ParsedBingAuth(BingAuth(ig, iid, key, token, optional("muid"), optional("sid"), optional("tid")), lifetime))
+} catch (e: Exception) {
+    Err(ServiceError.InvalidResponseError("Bing authentication page has missing or invalid token fields.", e))
 }

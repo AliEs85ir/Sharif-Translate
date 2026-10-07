@@ -110,7 +110,8 @@ class GoogleTranslatorService(
         sourceTag: String,
         targetTag: String
     ): Result<TranslationResponse, ServiceError> = coroutineBinding {
-        val responseString = httpClient.get(
+        val responseString = googleWebRequest(
+            httpClient = httpClient,
             url = TRANSLATE_PRIMARY,
             headers = apiConfig.createHeaders(),
             queryParams = mapOf(

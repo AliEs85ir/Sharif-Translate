@@ -85,8 +85,9 @@ val packagingJava = javaToolchains.launcherFor {
 // Refresh an existing portable installation without deleting its user data.
 tasks.register("refreshWindowsApp") {
     group = "distribution"
-    description = "Update the JAR in an existing Windows image (close the app first)"
+    description = "Update application and bundled plugin JARs in an existing Windows image (close the app first)"
     dependsOn(tasks.shadowJar)
+    dependsOn(":plugins:google-services:shadowJar", ":plugins:bing-services:shadowJar", ":plugins:ai-services:shadowJar")
     val sourceJar = tasks.shadowJar.flatMap { it.archiveFile }
     val targetJar = layout.buildDirectory.file("windows/Sharif Translate/app/SharifTranslate.jar")
     val launcher = layout.buildDirectory.file("windows/Sharif Translate/Sharif Translate.exe")
@@ -95,6 +96,18 @@ tasks.register("refreshWindowsApp") {
             "Create the portable installation first with :app:windowsImage"
         }
         sourceJar.get().asFile.copyTo(targetJar.get().asFile, overwrite = true)
+        val pluginDirectory = launcher.get().asFile.parentFile.resolve("plugins").also { it.mkdirs() }
+        for (module in listOf("google-services", "bing-services", "ai-services")) {
+            rootProject.file("plugins/$module/build/libs/$module-plugin.jar")
+                .copyTo(pluginDirectory.resolve("$module-plugin.jar"), overwrite = true)
+        }
+        for (name in listOf("NOTICE.md", "CHANGES.md")) {
+            rootProject.file("plugins/$name").copyTo(pluginDirectory.resolve(name), overwrite = true)
+        }
+        for (name in listOf("LICENSE", "README.md")) {
+            rootProject.file(name).copyTo(launcher.get().asFile.parentFile.resolve(name), overwrite = true)
+        }
+
     }
 }
 
@@ -145,6 +158,8 @@ val windowsImage = tasks.register<Exec>("windowsImage") {
             from(rootProject.file("plugins/google-services/build/libs/google-services-plugin.jar"))
             from(rootProject.file("plugins/bing-services/build/libs/bing-services-plugin.jar"))
             from(rootProject.file("plugins/ai-services/build/libs/ai-services-plugin.jar"))
+            from(rootProject.file("plugins/NOTICE.md"))
+            from(rootProject.file("plugins/CHANGES.md"))
             into(image.resolve("plugins"))
         }
         copy {

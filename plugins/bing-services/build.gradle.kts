@@ -5,6 +5,7 @@ plugins {
 }
 
 dependencies {
+    testImplementation(kotlin("test"))
     implementation(project(":api"))
     implementation(project(":plugins:common"))
     implementation(libs.kotlinxSerialization)
@@ -16,4 +17,10 @@ tasks.shadowJar {
     archiveBaseName.set("bing-services-plugin")
     archiveClassifier.set("")
     archiveVersion.set("")
+}
+
+// Preserve provenance when a plugin JAR is distributed separately.
+tasks.processResources {
+    from(rootProject.file("LICENSE"))
+    from(rootProject.file("plugins/NOTICE.md"))
 }

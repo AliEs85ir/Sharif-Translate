@@ -75,11 +75,16 @@ class AISpellCheckerService(
         return try {
             val clean = raw.trim().removePrefix("```json").removePrefix("```").removeSuffix("```").trim()
             val dto = json.decodeFromString<SpellCheckResponseDto>(clean)
+            if (dto.correctedText.isBlank()) {
+                return Err(ServiceError.InvalidResponseError("AI spell checker returned empty text.", null))
+            }
 
             val corrections = dto.corrections.mapNotNull { item ->
                 runCatching {
-                    val start = item.startIndex.coerceIn(0, originalText.length)
-                    val end = item.endIndex.coerceIn(start + 1, originalText.length)
+                    val start = item.startIndex
+                    val end = item.endIndex
+                    require(start >= 0 && end > start && end <= originalText.length)
+                    require(originalText.substring(start, end) == item.original)
                     Correction(
                         original = item.original,
                         startIndex = start,

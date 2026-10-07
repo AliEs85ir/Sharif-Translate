@@ -78,6 +78,14 @@ internal class PluginSettingsManager(
             val newInstance = settingsClass.getDeclaredConstructor().newInstance()
                 as PluginSettings.Configurable
 
+            // Partial updates must retain the user's model, keys and other settings.
+            settingsClass.declaredFields.forEach { field ->
+                if (field.getAnnotation(Setting::class.java) != null) {
+                    field.isAccessible = true
+                    field.set(newInstance, field.get(currentSettings))
+                }
+            }
+
             val applied = applyMapToInstance(settingsClass, newInstance, settingsMap)
 
             @Suppress("UNCHECKED_CAST")
@@ -112,9 +120,7 @@ internal class PluginSettingsManager(
         settingsClass.declaredFields.forEach { field ->
             field.isAccessible = true
             val annotation = field.getAnnotation(Setting::class.java) ?: return@forEach
-            val raw = map[field.name]
-                ?: annotation.defaultValue.takeIf { it.isNotBlank() }
-                ?: return@forEach
+            val raw = map[field.name] ?: return@forEach
 
             if (!schemaBuilder.validate(raw, annotation)) {
                 logger.warn("Validation failed for field '${field.name}' in plugin '$settingsClass.simpleName'")

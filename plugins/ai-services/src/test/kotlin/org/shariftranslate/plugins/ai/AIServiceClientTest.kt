@@ -4,6 +4,8 @@ import org.shariftranslate.api.core.Logger
 import org.shariftranslate.api.language.LanguageCode
 import org.shariftranslate.api.plugin.*
 import org.shariftranslate.api.translator.TranslationRequest
+import org.shariftranslate.api.ocr.ImageData
+import org.shariftranslate.api.spellchecker.SpellCheckRequest
 import org.shariftranslate.plugins.common.KtorHttpClient
 import com.github.michaelbull.result.*
 import com.sun.net.httpserver.HttpServer
@@ -69,12 +71,18 @@ class AIServiceClientTest {
             assertEquals(LanguageCode.ENGLISH, translated?.detectedLanguage)
             response.set("""{"choices":[{"message":{"content":"{\"translation\":\" \"}"}}]}""")
             assertIs<ServiceError.InvalidResponseError>(AITranslatorService(client).translate(TranslationRequest("Hello", LanguageCode.AUTO, LanguageCode.FARSI)).getError())
+            response.set(buildJsonObject { putJsonArray("choices") { add(buildJsonObject {
+                putJsonObject("message") { put("content", """{"corrected_text":"the and the","corrections":[{"original":"teh","corrected":"the","start_index":0,"end_index":3},{"original":"wrong","corrected":"the","start_index":8,"end_index":11},{"original":"teh","corrected":"the","start_index":-1,"end_index":3}]}""") }
+            }) } }.toString())
+            val spell = AISpellCheckerService(client).check(SpellCheckRequest("teh and teh", LanguageCode.ENGLISH)).getOrElse { error(it.toString()) }
+            assertEquals("the and the", spell.correctedText)
+            assertEquals(1, spell.corrections.size, "Incorrect or out-of-bounds model offsets must not highlight unrelated text")
         } finally { http.close(); server.stop(0); context.scope.cancel() }
     }
 
     @Test fun remoteEndpointsRequireCredentialsAndInvalidSettingsFailBeforeNetwork(): Unit = runBlocking {
         val http = KtorHttpClient(context)
-        var settings = AISettings()
+        var settings = AISettings(model = "validation-model")
         val client = AIServiceClient(context, http) { settings }
         try {
             assertIs<ServiceError.AuthenticationError>(client.complete("translate", "test").getError())
@@ -86,7 +94,61 @@ class AIServiceClientTest {
             assertIs<ServiceError.InvalidInputError>(client.complete("translate", "test").getError())
             settings = settings.copy(baseUrl = "http://localhost:1/v1", maxTokens = 0)
             assertIs<ServiceError.InvalidInputError>(client.complete("translate", "test").getError())
+            settings = settings.copy(maxTokens = 4096)
+            for (headers in listOf(
+                """{"authorization":"Bearer hidden"}""",
+                """{"Content-Type":"text/plain"}""",
+                """{"X-Test":"line\r\ninjected"}""",
+                """{"X-Test":"a","x-test":"b"}""",
+                """{"Host":"other.example"}"""
+            )) {
+                settings = settings.copy(customHeaders = headers)
+                assertIs<ServiceError.InvalidInputError>(client.complete("translate", "test").getError())
+                assertIs<ServiceError.InvalidInputError>(client.completeWithImage("ocr", ImageData(byteArrayOf(1), "png", 1, 1)).getError())
+                assertIs<ServiceError.InvalidInputError>(client.validateConfiguration(settings))
+            }
+            settings = settings.copy(baseUrl = "http://localhost:0/v1", customHeaders = "")
+            assertIs<ServiceError.InvalidInputError>(client.complete("translate", "test").getError())
+            settings = settings.copy(baseUrl = "https://localhost.example/v1")
+            assertIs<ServiceError.AuthenticationError>(client.complete("translate", "test").getError())
         } finally { http.close(); context.scope.cancel() }
+    }
+
+    @Test fun textAndVisionUseUserKeyAndLiveSettingsWithCorrectJpegMime(): Unit = runBlocking {
+        val payload = AtomicReference<JsonObject>()
+        val authorization = AtomicReference<String>()
+        val attribution = AtomicReference<String>()
+        val calls = java.util.concurrent.atomic.AtomicInteger()
+        val server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0)
+        server.createContext("/v1/chat/completions") { exchange ->
+            calls.incrementAndGet()
+            payload.set(Json.parseToJsonElement(exchange.requestBody.bufferedReader(Charsets.UTF_8).readText()).jsonObject)
+            authorization.set(exchange.requestHeaders.getFirst("Authorization"))
+            attribution.set(exchange.requestHeaders.getFirst("X-Title"))
+            val response = """{"choices":[{"message":{"content":"result"}}]}""".toByteArray()
+            exchange.sendResponseHeaders(200, response.size.toLong())
+            exchange.responseBody.use { it.write(response) }
+        }
+        server.start()
+        val http = KtorHttpClient(context)
+        var settings = AISettings(baseUrl = "http://127.0.0.1:${server.address.port}/v1", apiKey = "user-key", model = "first-model")
+        val client = AIServiceClient(context, http) { settings }
+        try {
+            assertEquals("result", client.complete("translate", "سلام 😀").get())
+            assertEquals("Bearer user-key", authorization.get())
+            assertEquals("Sharif Translate", attribution.get())
+            assertEquals("first-model", payload.get()["model"]!!.jsonPrimitive.content)
+            settings = settings.copy(model = "vision-model", apiKey = "next-user-key")
+            assertEquals("result", client.completeWithImage("ocr", ImageData(byteArrayOf(1, 2, 3), ".JPG", 1, 1), "read text").get())
+            assertEquals("Bearer next-user-key", authorization.get())
+            assertEquals("vision-model", payload.get()["model"]!!.jsonPrimitive.content)
+            val content = payload.get()["messages"]!!.jsonArray[1].jsonObject["content"]!!.jsonArray
+            assertEquals("data:image/jpeg;base64,AQID", content[0].jsonObject["image_url"]!!.jsonObject["url"]!!.jsonPrimitive.content)
+            assertEquals("read text", content[1].jsonObject["text"]!!.jsonPrimitive.content)
+            assertIs<ServiceError.InvalidInputError>(client.completeWithImage("ocr", ImageData(byteArrayOf(), "png", 1, 1)).getError())
+            assertIs<ServiceError.InvalidInputError>(client.completeWithImage("ocr", ImageData(byteArrayOf(1), "bmp", 1, 1)).getError())
+            assertEquals(2, calls.get(), "Invalid images must fail before network access")
+        } finally { http.close(); server.stop(0); context.scope.cancel() }
     }
     @Test fun concurrentRequestsKeepTheirOwnResponsesAndRecoverAfterCancellation(): Unit = runBlocking {
         val server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0)
@@ -102,7 +164,7 @@ class AIServiceClientTest {
         }
         server.start()
         val http = KtorHttpClient(context)
-        val client = AIServiceClient(context, http) { AISettings(baseUrl = "http://127.0.0.1:${server.address.port}/v1", customHeaders = "") }
+        val client = AIServiceClient(context, http) { AISettings(baseUrl = "http://127.0.0.1:${server.address.port}/v1", model = "validation-model", customHeaders = "") }
         try {
             val slow = async { client.complete("echo", "slow") }
             withTimeout(3000) { entered.await() }

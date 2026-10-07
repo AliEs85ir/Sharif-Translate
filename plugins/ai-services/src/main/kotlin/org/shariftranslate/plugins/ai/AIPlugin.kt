@@ -22,7 +22,7 @@ import com.github.michaelbull.result.Result
  * - **AI Dictionary** — full definitions, part-of-speech, phonetics, synonyms for any word
  * - **AI Vision OCR** — extracts text from images using vision-capable models
  *
- * All four services share one [AIServiceClient] instance that reads [AISettings]
+ * All six services share one [AIServiceClient] instance that reads [AISettings]
  * via a lambda, so changes in Settings → Plugins take effect on the next API
  * call without any service rebuild.
  *
@@ -68,7 +68,7 @@ class AIPlugin : Plugin<AISettings> {
         )
 
         pluginContext.logger.info(
-            "AI Plugin initialized [baseUrl=${settings.baseUrl}, model=${settings.model}]"
+            "AI Plugin initialized"
         )
         return Ok(Unit)
     }
@@ -85,7 +85,7 @@ class AIPlugin : Plugin<AISettings> {
     }
 
     override suspend fun onSettingsChanged(settings: AISettings): Result<Unit, ServiceError> {
-        val error = validateSettings(settings)
+        val error = serviceClient.validateConfiguration(settings)
         if (error != null) return Err(error)
 
         pluginContext.storeValue(KEY_BASE_URL,       settings.baseUrl)
@@ -95,10 +95,10 @@ class AIPlugin : Plugin<AISettings> {
         pluginContext.storeValue(KEY_MAX_TOKENS,     settings.maxTokens.toString())
         pluginContext.storeValue(KEY_CUSTOM_HEADERS, settings.customHeaders)
 
-        this.settings = settings
+        this.settings = settings.copy()
 
         pluginContext.logger.info(
-            "AI Plugin settings updated [baseUrl=${settings.baseUrl}, model=${settings.model}]"
+            "AI Plugin settings updated"
         )
         return Ok(Unit)
     }
@@ -126,18 +126,6 @@ class AIPlugin : Plugin<AISettings> {
             AIDictionaryService(client = serviceClient),
             AIVisionOcrService(client = serviceClient)
         )
-    }
-
-    private fun validateSettings(settings: AISettings): ServiceError.ValidationError? = when {
-        settings.baseUrl.isBlank() ->
-            ServiceError.ValidationError("Base URL must not be empty.")
-        settings.model.isBlank() ->
-            ServiceError.ValidationError("Model name must not be empty.")
-        settings.temperature !in 0.0..2.0 ->
-            ServiceError.ValidationError("Temperature must be between 0.0 and 2.0.")
-        settings.maxTokens < 1 ->
-            ServiceError.ValidationError("Max Tokens must be at least 1.")
-        else -> null
     }
 
     private companion object {

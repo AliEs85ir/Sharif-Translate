@@ -98,7 +98,6 @@ class KtorHttpClient(
             val response: HttpResponse = client.get(url) {
                 headers.forEach { (key, value) -> header(key, value) }
                 queryParams.forEach { (key, value) ->
-                    parametersOf()
                     when (value) {
                         is List<*> -> value.forEach { item -> item?.let { parameter(key, it.toString()) } }
                         else -> value?.let { parameter(key, it.toString()) }
@@ -334,59 +333,22 @@ class KtorHttpClient(
 
     // ========== RESPONSE HANDLING ==========
 
-    private suspend fun handleResponse(
-        response: HttpResponse,
-        url: String
-    ): Result<String, ServiceError> {
-        return when {
-            response.status.isSuccess() -> Ok(response.bodyAsText())
-            response.status == HttpStatusCode.Unauthorized || response.status == HttpStatusCode.Forbidden -> Err(
-                ServiceError.AuthenticationError("Authentication failed for $url")
-            )
+    private suspend fun handleResponse(response: HttpResponse, url: String): Result<String, ServiceError> =
+        if (response.status.isSuccess()) Ok(response.bodyAsText()) else Err(responseError(response, url))
 
-            response.status == HttpStatusCode.TooManyRequests -> Err(
-                ServiceError.RateLimitError("Rate limit exceeded for $url")
-            )
+    private suspend fun handleResponseBytes(response: HttpResponse, url: String): Result<ByteArray, ServiceError> =
+        if (response.status.isSuccess()) Ok(response.body<ByteArray>()) else Err(responseError(response, url))
 
-            response.status == HttpStatusCode.PaymentRequired -> {
-                val errorBody = response.bodyAsText().take(4096)
-                pluginContext.logger.error("HTTP 402 (Payment Required) for $url — $errorBody")
-                Err(
-                    ServiceError.AuthenticationError(
-                        "Insufficient credits. " +
-                        "If you are using OpenRouter, visit openrouter.ai/settings/credits to top up, " +
-                        "or switch to a free model (append :free to the model name, e.g. google/gemini-flash-1.5-8b:free)."
-                    )
-                )
-            }
-
-            else -> {
-                val errorBody = response.bodyAsText().take(4096)
-                pluginContext.logger.error("HTTP ${response.status.value} for $url — $errorBody")
-                Err(ServiceError.ServiceUnavailableError("HTTP ${response.status.value} for $url\n$errorBody"))
-            }
-        }
-    }
-
-    private suspend fun handleResponseBytes(
-        response: HttpResponse,
-        url: String
-    ): Result<ByteArray, ServiceError> {
-        return when {
-            response.status.isSuccess() -> Ok(response.body<ByteArray>())
-            response.status == HttpStatusCode.Unauthorized || response.status == HttpStatusCode.Forbidden -> Err(
-                ServiceError.AuthenticationError("Authentication failed for $url")
-            )
-
-            response.status == HttpStatusCode.TooManyRequests -> Err(
-                ServiceError.RateLimitError("Rate limit exceeded for $url")
-            )
-
-            else -> {
-                val errorBody = response.bodyAsText().take(4096)
-                pluginContext.logger.error("HTTP ${response.status.value} for $url — $errorBody")
-                Err(ServiceError.ServiceUnavailableError("HTTP ${response.status.value} for $url\n$errorBody"))
-            }
+    private fun responseError(response: HttpResponse, url: String): ServiceError {
+        // Providers may echo private input or credentials in error bodies; never log them.
+        val status = response.status.value
+        pluginContext.logger.warn("HTTP $status from service endpoint")
+        return when (status) {
+            401, 403 -> ServiceError.AuthenticationError("Authentication failed for $url")
+            402 -> ServiceError.AuthenticationError("The selected provider requires credits. Check your account or choose a model available to your account without payment.")
+            429 -> ServiceError.RateLimitError("Rate limit exceeded for $url")
+            400, 413, 422 -> ServiceError.InvalidInputError("Service rejected the request (HTTP $status). Check the input, model and service settings.")
+            else -> ServiceError.ServiceUnavailableError("HTTP $status for $url")
         }
     }
 

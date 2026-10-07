@@ -12,14 +12,15 @@ import org.shariftranslate.api.tts.TTSResponse
 import org.shariftranslate.api.tts.TextToSpeech
 import org.shariftranslate.api.tts.Voice
 import org.shariftranslate.api.tts.VoiceSupport
+import java.io.ByteArrayOutputStream
+import java.util.Locale
+import org.shariftranslate.plugins.common.textChunks
 import org.shariftranslate.plugins.common.ApiConfig
 import org.shariftranslate.plugins.common.KtorHttpClient
 import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.coroutines.coroutineBinding
 import com.github.michaelbull.result.getOrElse
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 
 data class VoiceInfo(
@@ -33,12 +34,13 @@ class BingTTSService(
     private val httpClient: KtorHttpClient,
     private val authManager: BingAuthManager,
     private val languageMapper: BingLanguageMapper,
-    private val apiConfig: ApiConfig
+    private val apiConfig: ApiConfig,
+    private val endpoint: String = "https://www.bing.com/tfettts"
 ) : TextToSpeech, VoiceSupport {
 
     override val id: String = "bing-tts"
     override val name: String = "Bing TTS"
-    override val version: String = "1.0.0"
+    override val version: String = "1.1.0"
     override val iconPath: String = "assets/bing-translate-icon.svg"
 
     override val supportedLanguages: SupportedLanguages
@@ -176,29 +178,17 @@ class BingTTSService(
             val auth = authManager.getAuth().bind()
             val voiceInfo = selectVoiceInfo(voice)
             val locale = voiceInfo.locale
-            val shortName = voice.id.ifEmpty { voiceInfo.shortName }
+            val shortName = voiceInfo.shortName
             val gender = voiceInfo.gender
-            val rate = String.format("%+.2f%%", (speed - 1f) * 100)
+            val rate = String.format(Locale.ROOT, "%+.2f%%", (speed - 1f) * 100)
             val chunks = partitionText(text)
 
-            val audioChunks = chunks
-                .map { chunk ->
-                    async {
-                        synthesizeChunk(
-                            text = chunk,
-                            locale = locale,
-                            voiceName = shortName,
-                            gender = gender,
-                            rate = rate,
-                            auth = auth
-                        )
-                    }
-                }
-                .awaitAll()
-
-            val audioData =
-                if (audioChunks.isEmpty()) ByteArray(0)
-                else audioChunks.reduce { acc, bytes -> acc + bytes }
+            val audio = ByteArrayOutputStream()
+            // Fetch in order: avoid unbounded speech requests and quadratic byte copying.
+            for (chunk in chunks) {
+                audio.write(synthesizeChunk(chunk, locale, shortName, gender, rate, auth).bind())
+            }
+            val audioData = audio.toByteArray()
 
             TTSResponse(audio = TTSAudio.Bytes(audioData, AudioFormat.MP3))
         }
@@ -246,7 +236,7 @@ class BingTTSService(
         )
 
         httpClient.postFormBytes(
-            url = TTS_URL,
+            url = endpoint,
             headers = apiConfig.createHeaders(),
             formData = formData,
             queryParams = mapOf(
@@ -259,17 +249,5 @@ class BingTTSService(
     }
 
     private fun partitionText(text: String): List<String> =
-        text.split(Regex("\\s+"))
-            .fold(mutableListOf<String>()) { acc, word ->
-                val current = acc.lastOrNull() ?: ""
-                val next = if (current.isEmpty()) word else "$current $word"
-                if (next.length > MAX_CHUNK_LENGTH) {
-                    if (word.isNotEmpty()) acc.add(word)
-                } else {
-                    if (acc.isNotEmpty()) acc[acc.lastIndex] = next
-                    else acc.add(next)
-                }
-                acc
-            }
-            .filter { it.isNotBlank() }
+        textChunks(text, MAX_CHUNK_LENGTH).filter { it.isNotBlank() }
 }

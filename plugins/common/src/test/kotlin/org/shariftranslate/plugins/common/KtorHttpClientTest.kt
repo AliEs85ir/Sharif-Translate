@@ -41,6 +41,11 @@ class KtorHttpClientTest {
         try {
             assertEquals("سلام!\nHello — 😀", client.get(base).get())
             assertIs<ServiceError.AuthenticationError>(client.get("$base/401").getError())
+            assertIs<ServiceError.AuthenticationError>(client.get("$base/402").getError())
+            assertIs<ServiceError.AuthenticationError>(client.getBytes("$base/402").getError())
+            assertIs<ServiceError.AuthenticationError>(client.postFormBytes("$base/402", mapOf("text" to "hello")).getError())
+            assertIs<ServiceError.InvalidInputError>(client.post("$base/400").getError())
+            assertIs<ServiceError.InvalidInputError>(client.getBytes("$base/413").getError())
             assertIs<ServiceError.RateLimitError>(client.post("$base/429").getError())
             assertIs<ServiceError.ServiceUnavailableError>(client.get("$base/503").getError())
             assertIs<ServiceError.NetworkError>(client.get("http://127.0.0.1:1/").getError())

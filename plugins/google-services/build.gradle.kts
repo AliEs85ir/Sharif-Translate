@@ -18,3 +18,9 @@ tasks.shadowJar {
     archiveVersion.set("")
 }
 
+
+// Preserve provenance when a plugin JAR is distributed separately.
+tasks.processResources {
+    from(rootProject.file("LICENSE"))
+    from(rootProject.file("plugins/NOTICE.md"))
+}

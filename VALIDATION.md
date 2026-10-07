@@ -34,7 +34,7 @@ Run the explicit Windows desktop smoke test from the repository root:
 The smoke test opens temporary test windows and sends keyboard/mouse input. Its captured log is in `app/build/validation/shortcut-smoke.log`.
 
 
-## Full system audit � final verification, 2026-10-03
+## Full system audit — final verification, 2026-10-03
 
 See [SYSTEM_AUDIT.md](SYSTEM_AUDIT.md) for fixes, topic commits, reproduction commands,
 evidence and unverified scope. The expanded suite has 51 tests with no failures/errors/skips.
@@ -48,3 +48,44 @@ live translation, including recovery through Google's fallback endpoint.
 
 Real remote AI provider credentials and physical multi-monitor DPI/audio hardware remain
 outside the verified scope. This supersedes earlier test counts above.
+
+## Plugin strengthening — 2026-10-07
+
+- Final offline build: `test :app:refreshWindowsApp :app:artifactSmokeJar`, with
+  Gradle on JDK 17, compilation on JDK 21 and Kotlin compilation in process.
+  **60 tests, 0 failures, 0 errors, 0 skipped.**
+- Google/Bing manifests are version 1.1.0; AI is version 2.1.0. All display
+  **Ali Esmaeili**. Installed plugin JARs exactly match the rebuilt files and each
+  carries the root MIT LICENSE and plugin NOTICE. No original application package
+  namespace or inherited project repository/update URL remains in these modules.
+- Regression coverage includes layout/CRLF/Unicode preservation, language-aware
+  caching, repeated-word correction offsets, bounded network concurrency, provider
+  token expiry and concurrent refresh, long speech chunks/emoji, fallback recovery,
+  SSML formatting under a German locale, text/binary HTTP errors, cancellation,
+  user-key headers, live AI settings, JPEG MIME, invalid header rejection and
+  rejecting misleading AI spell-check offsets.
+- The packaged JAR and bundled runtime passed live English/Persian/automatic/
+  multiline Google translations, live Bing translation and history undo/redo.
+  Live Google/Bing spelling, Google dictionary definitions and valid MP3 frames
+  from both speech providers passed. Legacy Google `gtx` requests returned 429;
+  the full-JSON browser-extension-client fallback recovered successfully.
+- All six AI capabilities passed against a controlled local HTTP endpoint, along
+  with rate limit, malformed/truncated output and connection refusal. No paid AI
+  request or developer-owned API credential was used. Actual remote AI provider
+  credentials and Google Cloud Vision OCR credentials were not supplied.
+- The integration check exposed partial plugin settings resetting unspecified
+  values. A focused fix and regression test now preserve models/keys and prevent
+  rejected updates from modifying live or persisted settings. The complete
+  artifact check then passed; log: `app/build/validation/plugins-network-verified.log`.
+- Three rebuilt plugin JARs were verified against the trusted local build and
+  accepted through the public plugin update API, first on an isolated copy, then
+  in the existing portable installation. History, collections, application
+  settings and any stored keys were preserved; only plugin integrity registration
+  changed. No fingerprint verification was disabled.
+- The real Swing entry point passed window/title/icon/tray rendering checks;
+  screenshot: `app/build/validation/plugins-ui-20261007.png`. The native EXE also
+  opened a responding Sharif Translate window and exited normally in an isolated
+  data directory. Direct Computer Use was unavailable because this session has no
+  `node_repl` tool; application instrumentation and process/window checks were used.
+
+Details and upgrade instructions: [plugins/CHANGES.md](plugins/CHANGES.md).
