@@ -26,7 +26,7 @@ Most plugins that connect to external APIs require at least an API key.
 4. Fill in the required fields (marked with a red `*`)
 5. Click **Save**
 
-The configuration is stored securely in your SharifTranslate data folder. It is never sent anywhere except to the API the plugin connects to.
+The configuration is stored locally in your Sharif Translate data folder. Plugins can read their configured credentials and send them to their service provider; install only plugins you trust. Do not upload this folder to GitHub.
 
 ---
 
@@ -77,4 +77,4 @@ Go to **Settings → Services & Presets** and check the dropdowns — the servic
 ## Safety note
 
 SharifTranslate loads third-party plugin JARs at runtime. Install only plugins from sources you trust. A malicious plugin has full access to the JVM and can read your API keys from the settings store.
-We review plugins before listing them in the README, but we cannot guarantee the safety of every third-party plugin.
+Community plugins are not reviewed or guaranteed by the Sharif Translate maintainers.

@@ -1,159 +1,90 @@
-name: Release
+name: Windows package and release
 
 on:
+  workflow_dispatch:
   push:
     tags:
       - 'v*.*.*'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  release:
-    name: Build & Publish Release
-    runs-on: ubuntu-latest
-
+  package:
+    name: Test and build Windows ZIP
+    runs-on: windows-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-
-      - name: Set up Java 17
-        uses: actions/setup-java@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
 
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v5
-
-      - name: Extract version
-        id: version
-        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
-
-      - name: Build app JAR
-        run: ./gradlew :app:shadowJar --no-daemon
-        env:
-          APP_VERSION: ${{ steps.version.outputs.version }}
-
-      - name: Build plugin JARs
-        run: ./gradlew :plugins:bing-services:shadowJar :plugins:google-services:shadowJar :plugins:ai-services:shadowJar --no-daemon
-        env:
-          APP_VERSION: ${{ steps.version.outputs.version }}
-
-      - name: Assemble release zip
+      - name: Check version and tag
+        shell: pwsh
         run: |
-          VERSION="${{ steps.version.outputs.version }}"
+          $match = [regex]::Match((Get-Content gradle.properties -Raw), '(?m)^appVersion=([0-9]+\.[0-9]+\.[0-9]+)$')
+          if (-not $match.Success) { throw 'appVersion must be a semantic version in gradle.properties' }
+          $version = $match.Groups[1].Value
+          if ('${{ github.ref_type }}' -eq 'tag' -and '${{ github.ref_name }}' -ne "v$version") {
+            throw "Tag must be v$version"
+          }
+          "APP_VERSION=$version" >> $env:GITHUB_ENV
 
-          mkdir -p dist/SharifTranslate/plugins
-          mkdir -p dist/SharifTranslate/languages
+      - name: Build and test
+        shell: pwsh
+        run: .\gradlew.bat test :app:windowsZip --no-daemon --no-configuration-cache
 
-          cp app/build/libs/SharifTranslate.jar \
-             dist/SharifTranslate/SharifTranslate.jar
-
-          cp plugins/bing-services/build/libs/bing-services-plugin.jar \
-             dist/SharifTranslate/plugins/bing-services-plugin.jar
-
-          cp plugins/google-services/build/libs/google-services-plugin.jar \
-             dist/SharifTranslate/plugins/google-services-plugin.jar
-          
-          cp plugins/ai-services/build/libs/ai-services-plugin.jar \
-             dist/SharifTranslate/plugins/ai-services-plugin.jar
-
-          if [ -d languages ]; then
-            cp -R languages/. dist/SharifTranslate/languages/
-          fi
-
-          mkdir -p dist/SharifTranslate/themes
-          if [ -d themes ]; then
-            cp -R themes/. dist/SharifTranslate/themes/
-          fi
-
-          cd dist
-          zip -r "../SharifTranslate-${VERSION}.zip" SharifTranslate/
-
-          echo "Built: SharifTranslate-${VERSION}.zip"
-          ls -lh "../SharifTranslate-${VERSION}.zip"
-
-      - name: Generate changelog
-        id: changelog
+      - name: Audit clean package
+        shell: pwsh
         run: |
-          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          $package = "app/build/distributions/SharifTranslate-$env:APP_VERSION-windows-x64.zip"
+          if (-not (Test-Path $package)) { throw "Package missing: $package" }
+          Add-Type -AssemblyName System.IO.Compression
+          $archive = [System.IO.Compression.ZipFile]::OpenRead((Resolve-Path $package))
+          try {
+            $names = @($archive.Entries | ForEach-Object FullName)
+            if (-not ($names | Where-Object { $_ -like '*/Sharif Translate.exe' })) { throw 'EXE missing from package' }
+            if (-not ($names | Where-Object { $_ -like '*/app/SharifTranslate.jar' })) { throw 'Application JAR missing' }
+            if (@($names | Where-Object { $_ -match '(?i)(^|/)(app_settings|plugin_registry|history|collections)\.json$|(^|/)\.env($|/)|(^|/)logs/|(^|/)id_(rsa|ed25519)($|/)' }).Count -gt 0) {
+              throw 'Personal data or secrets found in package'
+            }
+          } finally { $archive.Dispose() }
+          $hash = (Get-FileHash -Algorithm SHA256 $package).Hash.ToLowerInvariant()
+          "$hash  $(Split-Path $package -Leaf)" | Set-Content SHA256SUMS.txt
 
-          if [ -z "$PREV_TAG" ]; then
-            RANGE="HEAD"
-          else
-            RANGE="$PREV_TAG..HEAD"
-          fi
+      - name: Upload package for review
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-package
+          path: |
+            app/build/distributions/SharifTranslate-*-windows-x64.zip
+            SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 14
 
-          # Categorize commits by Conventional Commit type
-          FEATURES=$(git log --pretty=format:"%s" $RANGE | grep -E "^feat(\(.+\))?:" | sed 's/^feat[^:]*: /- /' || true)
-          FIXES=$(git log --pretty=format:"%s" $RANGE | grep -E "^fix(\(.+\))?:" | sed 's/^fix[^:]*: /- /' || true)
-          REFACTORS=$(git log --pretty=format:"%s" $RANGE | grep -E "^refactor(\(.+\))?:" | sed 's/^refactor[^:]*: /- /' || true)
-          DOCS=$(git log --pretty=format:"%s" $RANGE | grep -E "^docs(\(.+\))?:" | sed 's/^docs[^:]*: /- /' || true)
-          CHORES=$(git log --pretty=format:"%s" $RANGE | grep -E "^(chore|ci|build)(\(.+\))?:" | sed 's/^[^:]*: /- /' || true)
-          OTHER=$(git log --pretty=format:"%s" $RANGE | grep -vE "^(feat|fix|refactor|docs|chore|ci|build)(\(.+\))?:" | sed 's/^/- /' || true)
-
-          # Build categorized log
-          LOG=""
-          [ -n "$FEATURES" ]  && LOG="${LOG}### New features\n${FEATURES}\n\n"
-          [ -n "$FIXES" ]     && LOG="${LOG}### Bug fixes\n${FIXES}\n\n"
-          [ -n "$REFACTORS" ] && LOG="${LOG}### Improvements\n${REFACTORS}\n\n"
-          [ -n "$DOCS" ]      && LOG="${LOG}### Documentation\n${DOCS}\n\n"
-          [ -n "$CHORES" ]    && LOG="${LOG}### Maintenance\n${CHORES}\n\n"
-          [ -n "$OTHER" ]     && LOG="${LOG}### Other\n${OTHER}\n\n"
-
-          # Fall back to flat log if no conventional commits found
-          if [ -z "$LOG" ]; then
-            LOG=$(git log --pretty=format:"- %s" $RANGE)
-          fi
-
-          echo "log<<EOF" >> "$GITHUB_OUTPUT"
-          printf "%b" "$LOG" >> "$GITHUB_OUTPUT"
-          echo "EOF" >> "$GITHUB_OUTPUT"
-
-      - name: Generate SHA-256 checksum
-        id: checksum
-        run: |
-          VERSION="${{ steps.version.outputs.version }}"
-          sha256sum "SharifTranslate-${VERSION}.zip" > "SHA256SUMS.txt"
-          echo "Built checksum:"
-          cat SHA256SUMS.txt
-
-      - name: Create GitHub Release
+  release:
+    name: Publish GitHub Release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: package
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-package
+          path: dist
+      - name: Publish tested package
         uses: softprops/action-gh-release@v2
         with:
-          name: SharifTranslate ${{ steps.version.outputs.version }}
+          name: Sharif Translate ${{ github.ref_name }}
+          generate_release_notes: true
           body: |
-            ## What's changed
-
-            ${{ steps.changelog.outputs.log }}
-
-            ---
-
-            **Full changelog:** https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md
-
-            ## Installation
-
-            1. Download `SharifTranslate-${{ steps.version.outputs.version }}.zip`
-            2. Extract it — you'll get a `SharifTranslate/` folder
-            3. Run `SharifTranslate.jar` inside it
-            4. The `plugins/` folder already contains the bundled plugins
-            5. The `languages/` folder already contains the bundled language files
-            6. The `themes/` folder contains additional community themes (drop more `.theme.json` files here to add themes)
-
-            > **Requires Java 17 or later.** [Download Java](https://adoptium.net)
-
-            ## Verification
-
-            Verify the integrity of your download using the `SHA256SUMS.txt` file:
-            ```
-            sha256sum -c SHA256SUMS.txt
-            ```
-
+            Portable Windows x64 package with bundled Java runtime and official plugins.
+            Extract the ZIP and run `Sharif Translate.exe`. See the repository README and LICENSE.
           files: |
-            SharifTranslate-${{ steps.version.outputs.version }}.zip
-            SHA256SUMS.txt
-          prerelease: ${{ contains(github.ref_name, '-beta') || contains(github.ref_name, '-alpha') || contains(github.ref_name, '-rc') }}
-          draft: false
+            dist/SharifTranslate-*-windows-x64.zip
+            dist/SHA256SUMS.txt
+          fail_on_unmatched_files: true

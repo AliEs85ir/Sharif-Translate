@@ -80,3 +80,12 @@ local.properties
 
 old-core/.claude/
 launcher.ps1
+
+# Local user data and credentials
+datastore/
+.env
+.env.*
+*.pem
+*.p12
+*.pfx
+*.key

@@ -21,7 +21,8 @@ You do not need to install Gradle — the project includes a Gradle wrapper (`./
 ## Open the project
 
 ```bash
-# Open your Sharif Translate checkout; no upstream remote is required.
+git clone https://github.com/AliEs85ir/Sharif-Translate.git
+cd Sharif-Translate
 ```
 
 If you want to contribute, fork first and clone your fork instead.

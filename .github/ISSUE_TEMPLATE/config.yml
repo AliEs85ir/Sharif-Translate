@@ -1,1 +1,8 @@
 blank_issues_enabled: true
+contact_links:
+  - name: Private security report
+    url: https://github.com/AliEs85ir/Sharif-Translate/security/advisories/new
+    about: Report vulnerabilities privately; never post credentials in public issues.
+  - name: Project documentation
+    url: https://github.com/AliEs85ir/Sharif-Translate/tree/main/wiki
+    about: Build, usage, and plugin development guides.

@@ -17,7 +17,7 @@
 
 ## Checklist
 
-- [ ] I branched off `develop`, not `main`
+- [ ] I branched off `main` and target `main` with this PR
 - [ ] The build passes locally (`./gradlew build`)
 - [ ] MVI architecture respected — no logic in UI components
 - [ ] Blocking I/O is wrapped in `withContext(Dispatchers.IO)`

@@ -17,13 +17,13 @@ Welcome to the SharifTranslate documentation wiki.
 - [Creating a Plugin](Creating-a-Plugin.md) — build your own translation engine, OCR, or TTS plugin
 - [Contributing](Contributing.md) — how to contribute code, docs, or translations
 
-### Plugin Marketplace _(coming soon)_
+### Community plugins
 
-SharifTranslate has a built-in marketplace that discovers community plugins from GitHub. Plugin authors opt in by adding the `shariftranslate-plugin` topic to their repo and placing a `shariftranslate-plugin.json` file at the repo root.
+The Plugins page links to the [shariftranslate-plugin GitHub topic](https://github.com/topics/shariftranslate-plugin). Users download plugin JARs from a source they trust and install them through Settings → Plugins. Automatic marketplace installation is not implemented.
 
-→ [Plugin publishing guide](Creating-a-Plugin.md#publishing-on-github)
+→ [Plugin development guide](Creating-a-Plugin.md)
 
-### Plugin examples (in the repo)
+## Plugin examples (in the repo)
 
 The bundled plugins are the best reference for plugin development:
 

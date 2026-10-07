@@ -27,7 +27,7 @@ Be respectful. Disagreements about code are fine; personal attacks are not. We a
 
 - **Bug reports** — open an issue using the Bug Report template
 - **Feature requests** — open an issue using the Feature Request template
-- **Bug fixes** — fork, fix, open a PR against `develop`
+- **Bug fixes** — fork, fix, open a PR against `main`
 - **New features** — open an issue first to discuss before writing code
 - **UI translations** — see [Adding a Language](wiki/Adding-a-Language.md)
 - **Plugins** — see [Creating a Plugin](wiki/Creating-a-Plugin.md)
@@ -44,49 +44,25 @@ Be respectful. Disagreements about code are fine; personal attacks are not. We a
 **Steps**
 
 ```bash
-# Open your own Sharif Translate checkout.
-# No upstream repository remote is required.
-
-# 3. Build everything
+git clone https://github.com/AliEs85ir/Sharif-Translate.git
+cd Sharif-Translate
 ./gradlew build
-
-# 4. Run the app
 ./gradlew :app:run -DappData="path/to/your/test/data"
 ```
 
-Open the project in IntelliJ IDEA — it will detect the Gradle build automatically.
-
----
+On Windows, run `./gradlew.bat` instead. The included Gradle wrapper resolves Java 21 toolchains for compilation. The Windows executable needs a Windows host and `:app:windowsZip`.
 
 ## Branch Strategy
 
-We use a lightweight Git Flow:
-
-```
-main          ← always releasable, protected, tagged for releases
-  └─ develop  ← integration branch, all PRs target this
-       └─ feature/your-feature-name   ← your work
-       └─ fix/short-description-of-bug
-       └─ docs/what-you-are-documenting
-```
-
-**Rules**
-- Never push directly to `main` or `develop`
-- Branch off `develop` for all work
-- Keep branches focused — one feature or fix per branch
-- Delete your branch after it is merged
+`main` is the only permanent branch. Create a short-lived branch from `main`, open a PR targeting `main`, and delete the branch after merging. No `develop` branch or `upstream` remote is required.
 
 ```bash
-# Start new work
-git checkout develop
-git pull upstream develop
+git checkout main
+git pull origin main
 git checkout -b feature/my-feature
-
-# When done, push and open a PR against develop
+# Make changes, then run the build and tests.
 git push origin feature/my-feature
 ```
-
----
 
 ## Commit Messages
 
@@ -129,15 +105,10 @@ The summary line should be under 72 characters and written in the imperative moo
 
 ## Opening a Pull Request
 
-1. Make sure your branch is up to date with `develop`:
-   ```bash
-   git fetch upstream
-   git rebase upstream/develop
-   ```
-2. Run the full build and tests locally: `./gradlew build test`
-3. Push your branch and open a PR against `develop` on GitHub
-4. Fill in the PR template — describe what changed and why
-5. Link any related issues with `Closes #123`
+1. Update your branch from `main`: `git fetch origin` then `git rebase origin/main`.
+2. Run the full build and tests locally: `./gradlew build test`.
+3. Push your branch and open a PR targeting `main`.
+4. Describe what changed, why, and any associated issue.
 
 **Review checklist (we check these)**
 - [ ] Builds without warnings

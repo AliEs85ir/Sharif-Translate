@@ -1,6 +1,6 @@
 # Sharif Translate
 
-Developed and maintained by **AliEs85ir (Ali Esameili | Sharif comp)**.
+Developed and maintained by **Ali Esmaeili (AliEs85ir | Sharif comp)**.
 
 ![Application icon](docs/images/app-icon.png)
 
@@ -30,7 +30,7 @@ Icon settings are created on launch at `app/build/windows/Sharif Translate/icons
 
 ## Project independence
 
-No upstream repository or update source is configured. Automatic update checks default to off. To use your own GitHub Releases, provide both JVM properties `shariftranslate.update.owner` and `shariftranslate.update.repository`. Manual checks report an unconfigured source without network access when either property is absent. Configure project contacts and maintainers in this repository when available.
+The project repository is [AliEs85ir/Sharif-Translate](https://github.com/AliEs85ir/Sharif-Translate). No release has been published yet, so automatic update checks remain off. When a tested release exists, set JVM properties `shariftranslate.update.owner=AliEs85ir` and `shariftranslate.update.repository=Sharif-Translate` to use this repository as the update source. Until then, manual checks report an unconfigured source without network access. Report ordinary bugs through [Issues](https://github.com/AliEs85ir/Sharif-Translate/issues) and security vulnerabilities [privately](SECURITY.md).
 
 Google and Bing retain their translation endpoints. AI retains its configurable endpoint, credentials, models and custom headers; default headers identify Sharif Translate without an inherited repository URL. The plugin API namespace is `org.shariftranslate`; external plugins must be rebuilt for this API. Bundled plugins are built and packaged together.
 
@@ -38,10 +38,10 @@ Bundled plugin maintenance is credited to **Ali Esmaeili**. See [plugin changes]
 
 The supplied logo and all generated icon sizes are in `ui-swing/src/main/resources/icons/app/`.
 
-See [architecture](wiki/Architecture.md), [plugin development](wiki/Creating-a-Plugin.md) and the bundled wiki for further documentation.
+See [release preparation](RELEASE.md), [architecture](wiki/Architecture.md), [plugin development](wiki/Creating-a-Plugin.md) and the bundled wiki for further documentation.
 
 ## Attribution
 
-Sharif Translate is the independently named and maintained project developed by AliEs85ir (Ali Esameili | Sharif comp), who is responsible for its completion, enhancements, and ongoing development under the Sharif Translate identity.
+Sharif Translate is the independently named and maintained project developed by Ali Esmaeili (AliEs85ir | Sharif comp), who is responsible for its completion, enhancements, and ongoing development under the Sharif Translate identity.
 
-The original application codebase was written by Ahmed Hatem as QTranslate. Sharif Translate builds on that foundation; AliEs85ir holds the rights to their own contributions and modifications, while the rights to the original code remain with its respective copyright holder. The original MIT copyright notice and applicable third-party license notices are retained in [LICENSE](LICENSE) and bundled resources. This attribution records the project's origin and does not configure a remote, update source, or external service.
+The original application codebase was written by Ahmed Hatem as QTranslate. Sharif Translate builds on that foundation; Ali Esmaeili holds the rights to their own contributions and modifications, while the rights to the original code remain with its respective copyright holder. The original MIT copyright notice and applicable third-party license notices are retained in [LICENSE](LICENSE) and bundled resources. This attribution records the project's origin; the repository and future update source are owned by AliEs85ir.

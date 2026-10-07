@@ -1263,7 +1263,7 @@ class MainAppFrame(
     }
 
     private fun showProjectInformation() {
-        JOptionPane.showMessageDialog(this, "See the bundled README.md and wiki documentation. Project contact is not configured.", "Sharif Translate", JOptionPane.INFORMATION_MESSAGE)
+        openUrl("https://github.com/AliEs85ir/Sharif-Translate/issues")
     }
 
     private fun onShowAboutDialog() {
@@ -1273,7 +1273,7 @@ class MainAppFrame(
             appName = "Sharif Translate",
             versionText = localizer.getString("common.version", AppConstants.APP_VERSION),
             descriptionHtml = localizer.getString("about_dialog.description"),
-            websiteUrl = "",
+            websiteUrl = "https://github.com/AliEs85ir/Sharif-Translate",
             icon = iconManager.getIcon("icons/app/128.png", 32, 32),
             closeButtonText = localizer.getString("common.close"),
             supportUrl = "",

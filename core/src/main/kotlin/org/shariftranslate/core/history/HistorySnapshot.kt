@@ -1,7 +1,10 @@
 package org.shariftranslate.core.history
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
 
+@OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class HistorySnapshot(
     val inputText: String,
@@ -9,6 +12,7 @@ data class HistorySnapshot(
     val sourceLanguage: String,
     val targetLanguage: String,
     val translatorId: String,
+    @EncodeDefault(EncodeDefault.Mode.ALWAYS)
     val timestamp: Long = System.currentTimeMillis(),
     /** The language actually detected when source was AUTO; null if source was explicit. */
     val detectedSourceLanguage: String? = null,

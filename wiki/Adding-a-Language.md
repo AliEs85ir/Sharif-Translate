@@ -198,7 +198,7 @@ Two options:
 **Option 1 — Pull request (preferred)**
 1. Fork the repository on GitHub
 2. Copy your `.toml` file into `app/src/main/resources/languages/`
-3. Open a PR against the `develop` branch with the title: `feat(i18n): add <language name> translation`
+3. Open a PR against the `main` branch with the title: `feat(i18n): add <language name> translation`
 
 **Option 2 — Just attach it**
 

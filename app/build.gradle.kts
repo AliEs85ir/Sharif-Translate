@@ -6,8 +6,10 @@ plugins {
     alias(libs.plugins.shadow)
 }
 
+val appVersion = providers.gradleProperty("appVersion").get()
+
 group = "org.shariftranslate"
-version = System.getenv("APP_VERSION") ?: "dev"
+version = appVersion
 
 application {
     mainClass.set("org.shariftranslate.app.MainKt")
@@ -130,7 +132,7 @@ val windowsImage = tasks.register<Exec>("windowsImage") {
         commandLine(
             packagingJava.get().metadata.installationPath.file("bin/jpackage.exe").asFile,
             "--type", "app-image", "--name", "Sharif Translate",
-            "--app-version", "1.2.1", "--vendor", "Sharif Translate",
+            "--app-version", appVersion, "--vendor", "Ali Esmaeili",
             "--input", layout.buildDirectory.dir("windows-input").get().asFile,
             "--main-jar", "SharifTranslate.jar", "--main-class", application.mainClass.get(),
             "--dest", destination,
@@ -177,7 +179,7 @@ tasks.register<Zip>("windowsZip") {
         into("Sharif Translate")
     }
     destinationDirectory.set(layout.buildDirectory.dir("distributions"))
-    archiveFileName.set("SharifTranslate-1.2.1-windows-x64.zip")
+    archiveFileName.set("SharifTranslate-${appVersion}-windows-x64.zip")
     isPreserveFileTimestamps = false
     isReproducibleFileOrder = true
 }
@@ -189,3 +191,16 @@ tasks.register<Jar>("artifactSmokeJar") {
     archiveFileName.set("artifact-smoke.jar")
     destinationDirectory.set(layout.buildDirectory.dir("validation"))
 }
+
+// Prevent the UI version from drifting away from Gradle and the Windows package.
+tasks.register("verifyAppVersion") {
+    group = "verification"
+    doLast {
+        val source = rootProject.file("core/src/main/kotlin/org/shariftranslate/core/shared/AppConstants.kt").readText()
+        check(source.contains("const val APP_VERSION = \"$appVersion\"")) {
+            "AppConstants.APP_VERSION must equal appVersion=$appVersion in gradle.properties"
+        }
+    }
+}
+tasks.named("check") { dependsOn("verifyAppVersion") }
+tasks.named("windowsImage") { dependsOn("verifyAppVersion") }
