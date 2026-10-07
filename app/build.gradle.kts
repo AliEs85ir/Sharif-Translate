@@ -1,4 +1,10 @@
 import java.io.File
+import org.gradle.api.DefaultTask
+import org.gradle.api.file.RegularFileProperty
+import org.gradle.api.provider.Property
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.InputFile
+import org.gradle.api.tasks.TaskAction
 
 plugins {
     id("buildsrc.convention.kotlin-jvm")
@@ -193,14 +199,22 @@ tasks.register<Jar>("artifactSmokeJar") {
 }
 
 // Prevent the UI version from drifting away from Gradle and the Windows package.
-tasks.register("verifyAppVersion") {
-    group = "verification"
-    doLast {
-        val source = rootProject.file("core/src/main/kotlin/org/shariftranslate/core/shared/AppConstants.kt").readText()
-        check(source.contains("const val APP_VERSION = \"$appVersion\"")) {
-            "AppConstants.APP_VERSION must equal appVersion=$appVersion in gradle.properties"
+abstract class VerifyAppVersion : DefaultTask() {
+    @get:Input abstract val expectedVersion: Property<String>
+    @get:InputFile abstract val constantsFile: RegularFileProperty
+
+    @TaskAction fun verify() {
+        val version = expectedVersion.get()
+        check(constantsFile.get().asFile.readText().contains("const val APP_VERSION = \"$version\"")) {
+            "AppConstants.APP_VERSION must equal appVersion=$version in gradle.properties"
         }
     }
+}
+
+tasks.register<VerifyAppVersion>("verifyAppVersion") {
+    group = "verification"
+    expectedVersion.set(appVersion)
+    constantsFile.set(rootProject.layout.projectDirectory.file("core/src/main/kotlin/org/shariftranslate/core/shared/AppConstants.kt"))
 }
 tasks.named("check") { dependsOn("verifyAppVersion") }
 tasks.named("windowsImage") { dependsOn("verifyAppVersion") }

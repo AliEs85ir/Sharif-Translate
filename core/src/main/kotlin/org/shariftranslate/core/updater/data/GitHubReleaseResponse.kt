@@ -17,7 +17,11 @@ internal data class GitHubReleaseResponse(
     @SerialName("body") val releaseNotes: String,
     @SerialName("html_url") val htmlUrl: String = "",
     @SerialName("assets") val assets: List<GitHubAsset> = emptyList()
-)
+) {
+    // The release also contains SHA256SUMS.txt; never offer that as an app download.
+    val packageDownloadUrl: String?
+        get() = assets.firstOrNull { it.downloadUrl.substringBefore('?').endsWith(".zip", ignoreCase = true) }?.downloadUrl
+}
 
 @Serializable
 internal data class GitHubAsset(

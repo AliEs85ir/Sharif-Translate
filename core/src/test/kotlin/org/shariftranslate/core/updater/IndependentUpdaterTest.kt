@@ -1,6 +1,8 @@
 package org.shariftranslate.core.updater
 
 import org.shariftranslate.api.core.Logger
+import org.shariftranslate.core.updater.data.GitHubAsset
+import org.shariftranslate.core.updater.data.GitHubReleaseResponse
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.runBlocking
 import com.github.michaelbull.result.getError
@@ -12,6 +14,18 @@ class IndependentUpdaterTest {
         override fun info(message: String) = Unit
         override fun warn(message: String) = Unit
         override fun error(message: String, error: Throwable?) = Unit
+    }
+
+    @Test fun releaseDownloadSelectsWindowsPackageRatherThanChecksum() {
+        val release = GitHubReleaseResponse(
+            tagName = "v0.1.0", name = "Preview", releaseNotes = "",
+            assets = listOf(
+                GitHubAsset("https://github.com/AliEs85ir/Sharif-Translate/releases/download/v0.1.0/SHA256SUMS.txt"),
+                GitHubAsset("https://github.com/AliEs85ir/Sharif-Translate/releases/download/v0.1.0/SharifTranslate-0.1.0-windows-x64.zip")
+            )
+        )
+        assertTrue(release.packageDownloadUrl!!.endsWith(".zip"))
+        assertNull(release.copy(assets = release.assets.take(1)).packageDownloadUrl)
     }
 
     @Test fun missingRepositoryDoesNotAttemptAnUpdate(): Unit = runBlocking {

@@ -109,7 +109,7 @@ class Updater(
                     versionTag   = response.tagName,
                     releaseName  = response.name,
                     releaseNotes = response.releaseNotes,
-                    downloadUrl  = response.assets.firstOrNull()?.downloadUrl,
+                    downloadUrl  = response.packageDownloadUrl,
                     releaseUrl   = response.htmlUrl.takeIf { it.isNotBlank() }
                 )
             )

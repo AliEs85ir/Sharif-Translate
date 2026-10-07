@@ -54,6 +54,16 @@ jobs:
           $hash = (Get-FileHash -Algorithm SHA256 $package).Hash.ToLowerInvariant()
           "$hash  $(Split-Path $package -Leaf)" | Set-Content SHA256SUMS.txt
 
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-test-reports
+          path: |
+            **/build/reports/tests/
+            **/build/test-results/
+          retention-days: 7
+
       - name: Upload package for review
         uses: actions/upload-artifact@v4
         with:
@@ -80,11 +90,17 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: Sharif Translate ${{ github.ref_name }}
-          generate_release_notes: true
           prerelease: ${{ github.ref_name == 'v0.1.0' }}
           body: |
-            Portable Windows x64 package with bundled Java runtime and official plugins.
-            Extract the ZIP and run `Sharif Translate.exe`. See the repository README and LICENSE.
+            Initial public preview of Sharif Translate by Ali Esmaeili (AliEs85ir).
+
+            - Portable Windows x64 ZIP with the Sharif Translate EXE, Java runtime, and official Google, Bing, and configurable AI plugins.
+            - Translation, speech, dictionary, OCR, history, collections, and multilingual desktop UI.
+            - AI features use each user's own provider key and model; no developer key is bundled.
+
+            Extract the ZIP and run `Sharif Translate.exe`. See README.md for setup and SHA256SUMS.txt to verify the download.
+
+            The project builds on the original QTranslate codebase by Ahmed Hatem. The original MIT notice and third-party licenses remain in LICENSE and bundled resources.
           files: |
             dist/SharifTranslate-*-windows-x64.zip
             dist/SHA256SUMS.txt
