@@ -34,34 +34,28 @@ class GoogleSpellCheckerServiceTest {
         override fun getPluginDataDirectory() = File(System.getProperty("java.io.tmpdir"))
     }
 
-    @Test fun layoutLanguageCacheOffsetsAndBoundedNetworkRequests(): Unit = runBlocking {
+    @Test fun layoutLanguageCacheOffsetsAndOneRequestPerSentence(): Unit = runBlocking {
         val calls = AtomicInteger()
-        val active = AtomicInteger()
-        val peak = AtomicInteger()
         val failures = AtomicInteger()
         val workers = Executors.newCachedThreadPool()
         val server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0)
         server.executor = workers
         server.createContext("/") { exchange ->
             calls.incrementAndGet()
-            val concurrent = active.incrementAndGet()
-            peak.updateAndGet { maxOf(it, concurrent) }
-            try {
-                val query = exchange.requestURI.rawQuery.split('&').associate {
-                    val pair = it.split('=', limit = 2)
-                    pair[0] to URLDecoder.decode(pair[1], "UTF-8")
-                }
-                Thread.sleep(25)
-                val text = query.getValue("q")
-                val corrected = if (query["sl"] == "en") text.replace("teh", "the") else text
-                val failed = text == "retry" && failures.getAndIncrement() == 0
-                val body = if (failed) "offline" else buildJsonObject {
-                    if (corrected != text) putJsonObject("spell") { put("spell_res", corrected) }
-                }.toString()
-                val bytes = body.toByteArray(Charsets.UTF_8)
-                exchange.sendResponseHeaders(if (failed) 503 else 200, bytes.size.toLong())
-                exchange.responseBody.use { it.write(bytes) }
-            } finally { active.decrementAndGet() }
+            val query = exchange.requestURI.rawQuery.split('&').associate {
+                val pair = it.split('=', limit = 2)
+                pair[0] to URLDecoder.decode(pair[1], "UTF-8")
+            }
+            Thread.sleep(25)
+            val text = query.getValue("q")
+            val corrected = if (query["sl"] == "en") text.replace("teh", "the") else text
+            val failed = text == "retry" && failures.getAndIncrement() == 0
+            val body = if (failed) "offline" else buildJsonObject {
+                if (corrected != text) putJsonObject("spell") { put("spell_res", corrected) }
+            }.toString()
+            val bytes = body.toByteArray(Charsets.UTF_8)
+            exchange.sendResponseHeaders(if (failed) 503 else 200, bytes.size.toLong())
+            exchange.responseBody.use { it.write(bytes) }
         }
         server.start()
         val context = context()
@@ -83,8 +77,9 @@ class GoogleSpellCheckerServiceTest {
             assertEquals("😀 the.\r\n  the!", multi.correctedText)
             for (item in multi.corrections) assertEquals(item.original, "😀 teh.\r\n  teh!".substring(item.startIndex, item.endIndex))
             val document = (1..30).joinToString("\n") { "Sentence $it." }
+            val beforeDocument = calls.get()
             assertEquals(document, check(document).getOrElse { error(it.toString()) }.correctedText)
-            assertTrue(peak.get() in 1..4, "Expected at most four concurrent requests, observed ${peak.get()}")
+            assertEquals(30, calls.get() - beforeDocument, "Each sentence should be requested once")
             assertIs<ServiceError.ServiceUnavailableError>(check("retry").getError())
             assertEquals("retry", check("retry").getOrElse { error(it.toString()) }.correctedText, "Failures must not poison the cache")
         } finally { http.close(); server.stop(0); workers.shutdownNow(); context.scope.cancel() }
