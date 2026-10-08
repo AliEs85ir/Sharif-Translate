@@ -102,6 +102,6 @@ jobs:
 
             The project builds on the original QTranslate codebase by Ahmed Hatem. The original MIT notice and third-party licenses remain in LICENSE and bundled resources.
           files: |
-            dist/SharifTranslate-*-windows-x64.zip
+            dist/app/build/distributions/SharifTranslate-*-windows-x64.zip
             dist/SHA256SUMS.txt
           fail_on_unmatched_files: true
